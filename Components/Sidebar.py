@@ -35,5 +35,7 @@ class Sidebar(customtkinter.CTkFrame):
         self.scaling_menu.grid(row=11, column=0, padx=20, pady=(5, 20))
 
         # Set Defaults
+        self.selected_mode = "DCV"
         self.appearance_menu.set("Dark")
+        customtkinter.set_appearance_mode("Dark")
         self.scaling_menu.set("100%")

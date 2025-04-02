@@ -107,7 +107,13 @@ class GraphComponent(customtkinter.CTkFrame):
         self.time_values.append(len(self.time_values))
         for i, val in enumerate(values):
             self.data_sets[i].append(val["Value"])
-            self.value_data_labels[i].configure(text=f"{val['Value']:.2f} {val['Label']}")
+            raw_val = val['Value']
+            if isinstance(raw_val, str):
+                value_str = raw_val
+            else:
+                value_str = f"{float(raw_val):.2f}"
+
+            self.value_data_labels[i].configure(text=f"{value_str} {val['Label']}")
 
     def update_graph(self, frame):
         """ Update the graph display """

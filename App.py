@@ -40,11 +40,14 @@ class App(customtkinter.CTk):
         self.graph = GraphComponent(self)
         self.controls = ControlButtons(self, self.start_action, self.stop_action)
 
+
+
         self.graph.grid_remove()
 
     def update_title(self, mode):
         """ Update title and show graph if needed """
         self.terminal.log(f"Mode selected: {mode}")
+        self.selected_mode = mode
         self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
 
         if self.graph_enabled:
@@ -65,15 +68,48 @@ class App(customtkinter.CTk):
         self.terminal.log("Stopped.")
 
     def generate_values(self):
-        """ Generate values and update UI """
+        """ Generate one new value per second, updating values and differences with terminal logging """
+        total_values = len(self.value_display.value_labels)
+
+        current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
+        difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
+        index = 0
+
         while self.running:
+            # Get unit and reference for this index
+            try:
+                unit = self.value_display.labels_values["units"][index]
+                reference = self.value_display.labels_values["references"][index]
+            except IndexError:
+                unit = "mV"
+                reference = 0
 
-            
+            # Log before
+            self.terminal.log(f"Executing: Measure {self.sidebar.selected_mode} at index {index} (ref: {reference} {unit})")
 
-            values = [{"Value": random.uniform(0, 10), "Label": "V"}, {"Value": random.uniform(0, 5), "Label": "A"}, {"Value": random.uniform(0, 1000), "Label": "Ω"}]
-            self.value_display.update_values(values)
+            # Generate new value
+            new_value = round(random.uniform(0, 1000), 2)
+            current_values[index] = {"Value": new_value, "Label": unit}
+            # Compute difference and update
+            difference = round(random.uniform(-1000, 1000), 2)/1000
+            difference_values[index] = {"Value": difference, "Label": unit}
+
+            self.value_display.labels_values["differences"][index] = difference
+
+            # Update display
+            self.value_display.update_values(current_values, difference_values)
+
             if self.graph_enabled:
-                self.graph.update_data(values)
+                graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
+                                {"Value": random.uniform(0, 5), "Label": "A"},
+                                {"Value": random.uniform(0, 1000), "Label": "Ω"}]
+
+                self.graph.update_data(graph_values)
+
+            # Log result
+            self.terminal.log(f"Updated index {index}: {new_value} {unit}, Δ = {difference} {unit}")
+
+            index = (index + 1) % total_values
             time.sleep(1)
 
     def change_scaling(self, new_scaling):
