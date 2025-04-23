@@ -9,10 +9,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 
 from Components.ControlButtons import ControlButtons
+from Components.DatabaseOverview import DatabaseOverview
 from Components.Graph import GraphComponent
 from Components.OutputTerminal import TerminalOutput
 from Components.Sidebar import Sidebar
 from Components.ValueDisplay import ValueDisplay
+from Utils.CalibrationUtils import CalibrationUtils
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
@@ -34,17 +36,61 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(2, weight=1)
 
         # UI Components
-        self.sidebar = Sidebar(self, self.update_title, self.change_scaling)
+        self.sidebar = Sidebar(self, self.update_title, self.change_scaling, self.show_database_overview)
         self.terminal = TerminalOutput(self)
         self.value_display = ValueDisplay(self)
         self.graph = GraphComponent(self)
         self.controls = ControlButtons(self, self.start_action, self.stop_action)
 
+        self.utils = CalibrationUtils("./Utils/calibration.db")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        self.database_overview = DatabaseOverview(self, self.show_calibration_view)
+        self.database_overview.grid(row=0, column=1, rowspan=3, padx=20, pady=20, sticky="nsew")
+        self.database_overview.grid_remove()
 
 
         self.graph.grid_remove()
 
+        self.selected_mode = "DCV"
+
+    def show_calibration_view(self):
+        self.database_overview.grid_remove()
+        self.show_all_pages()
+
+    def on_closing(self):
+        """ Cleanup when closing the app """
+        if self.utils.conn:
+            self.utils.close()
+        self.destroy()
+
+    def hide_all_pages(self):
+        """ Switch to Database Overview screen """
+
+        # Hide calibration components
+        self.value_display.grid_remove()
+        self.graph.grid_remove()
+        self.controls.grid_remove()
+        self.terminal.grid_remove()
+
+    def show_all_pages(self):
+        """ Switch to Database Overview screen """
+
+        # Hide calibration components
+        self.value_display.grid()
+        if self.graph_enabled:
+            self.graph.grid()
+        else:
+            self.graph.grid_remove()
+        self.controls.grid()
+        self.terminal.grid()
+
+    def show_database_overview(self):
+        self.hide_all_pages()
+        self.database_overview.grid()
+
     def update_title(self, mode):
+        self.show_all_pages()
         """ Update title and show graph if needed """
         self.terminal.log(f"Mode selected: {mode}")
         self.selected_mode = mode
@@ -59,6 +105,11 @@ class App(customtkinter.CTk):
         """ Start generating random values """
         if not self.running:
             self.running = True
+
+            # Create a new calibration in database
+            self.current_calibration_id = self.utils.log_new_calibration(self.selected_mode)
+            self.terminal.log(f"Started new calibration session: ID {self.current_calibration_id}")
+
             threading.Thread(target=self.generate_values, daemon=True).start()
             self.terminal.log("Generating values...")
 
@@ -66,6 +117,7 @@ class App(customtkinter.CTk):
         """ Stop generating values """
         self.running = False
         self.terminal.log("Stopped.")
+        self.database_overview.populate_dropdown()
 
     def generate_values(self):
         """ Generate one new value per second, updating values and differences with terminal logging """
@@ -98,7 +150,13 @@ class App(customtkinter.CTk):
 
             # Update display
             self.value_display.update_values(current_values, difference_values)
-
+            self.utils.log_measurement(
+                calibration_id=self.current_calibration_id,
+                set_value=reference,
+                calculated_value=new_value,
+                ref_set_diff=difference,
+                std=random.uniform(0.1, 0.5)  # Random fake std deviation (you can improve later)
+            )
             if self.graph_enabled:
                 graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
                                 {"Value": random.uniform(0, 5), "Label": "A"},
