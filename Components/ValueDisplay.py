@@ -3,9 +3,14 @@ import customtkinter
 
 class ValueDisplay(customtkinter.CTkFrame):
     """ Displays real-time values with labels """
-    def __init__(self, parent):
+    def __init__(self, parent, running):
+        self.running = running
+        self.vals = []
+        self.diffs = []
         super().__init__(parent, fg_color="transparent")
         self.grid(row=1, column=1, padx=(20, 20), pady=(10, 10), sticky="nsew")
+
+
 
         # === Configure grid columns ===
         columns_per_row = 3
@@ -17,6 +22,8 @@ class ValueDisplay(customtkinter.CTkFrame):
         header_width = 160
         label_width = 100
         padx = 10
+
+        label_value_size = 13
 
         # === Measurement definitions ===
         self.labels_per_task = {
@@ -69,12 +76,12 @@ class ValueDisplay(customtkinter.CTkFrame):
                 # Value labels
                 label_pos = customtkinter.CTkLabel(
                     self, text=f"{measurements[i]} {units[i]}",
-                    font=customtkinter.CTkFont(size=19, weight="bold"),
+                    font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
                     width=label_width
                 )
                 label_neg = customtkinter.CTkLabel(
                     self, text=f"{measurements[neg_index]} {units[neg_index]}",
-                    font=customtkinter.CTkFont(size=19, weight="bold"),
+                    font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
                     width=label_width
                 )
                 label_pos.grid(row=row_block * 3 + 1, column=column, padx=padx, pady=(4, 2), sticky="n")
@@ -109,7 +116,7 @@ class ValueDisplay(customtkinter.CTkFrame):
 
                 val_label = customtkinter.CTkLabel(
                     self, text=f"{measurements[i]} {units[i]}",
-                    font=customtkinter.CTkFont(size=19, weight="bold"),
+                    font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
                     width=label_width
                 )
                 val_label.grid(row=row_block * 3 + 1, column=column, columnspan=2, padx=padx, pady=(4, 2), sticky="n")
@@ -130,8 +137,50 @@ class ValueDisplay(customtkinter.CTkFrame):
                 column = 0
                 row_block += 1
 
+        # === Rounding Precision Slider ===
+        # === Rounding Precision Slider ===
+        self.rounding_precision = customtkinter.IntVar(value=2)
+
+        # Slider container frame (centered layout)
+        slider_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        slider_frame.grid(row=row_block * 3 + 1, column=0, columnspan=total_columns, pady=(10, 0), sticky="ew")
+        slider_frame.grid_columnconfigure(0, weight=1)
+        slider_frame.grid_columnconfigure(1, weight=0)
+        slider_frame.grid_columnconfigure(2, weight=1)
+
+        # Slider and label
+        self.precision_slider = customtkinter.CTkSlider(
+            slider_frame,
+            from_=0,
+            to=8,
+            number_of_steps=8,
+            variable=self.rounding_precision,
+            command=self.update_slider_label,
+            width=180,
+            height=22,
+            corner_radius=180,  # Change this value to make corners more or less round
+
+        )
+
+        self.precision_slider.grid(row=0, column=1, padx=(0, 20), sticky="ew")
+
+        self.precision_value_label = customtkinter.CTkLabel(slider_frame, text="2 digits",
+
+                                                            font=customtkinter.CTkFont(size=12))
+        self.precision_value_label.grid(row=0, column=2, sticky="w")
+
+    def update_slider_label(self, value):
+        self.precision_value_label.configure(text=f"{int(float(value))} digits")
+        if not self.running:
+            self.update_values(self.vals,self.diffs)
+
+
     def update_values(self, values, differences):
         """ Update the displayed values and differences """
+        self.vals = values
+        self.diffs = differences
+        precision = self.rounding_precision.get()
+
         for i, val in enumerate(values):
             try:
                 # Extract value and label
@@ -143,7 +192,7 @@ class ValueDisplay(customtkinter.CTkFrame):
                 if isinstance(raw_val, str):
                     value_str = raw_val
                 else:
-                    value_str = f"{float(raw_val):.2f}"
+                    value_str = f"{float(raw_val):.{precision}f}"
 
                 # Format difference
                 if isinstance(diff_val, str):

@@ -1,4 +1,4 @@
-import tkinter
+import tkinter as tk
 import customtkinter
 import pyvisa
 import random
@@ -35,13 +35,35 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(1, weight=2)
         self.grid_rowconfigure(2, weight=1)
 
-        # UI Components
-        self.sidebar = Sidebar(self, self.update_title, self.change_scaling, self.show_database_overview)
-        self.terminal = TerminalOutput(self)
-        self.value_display = ValueDisplay(self)
-        self.graph = GraphComponent(self)
-        self.controls = ControlButtons(self, self.start_action, self.stop_action)
+        # Paned container for resizable layout
+        self.paned = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashwidth=6, bg="#333", showhandle=True)
+        self.paned.grid(row=0, column=0, rowspan=3, columnspan=2, sticky="nsew")
 
+        # === Sidebar container (inside paned window) ===
+        self.sidebar_container = customtkinter.CTkFrame(self.paned, corner_radius=0)
+        self.sidebar = Sidebar(self.sidebar_container, self.update_title, self.change_scaling,
+                               self.show_database_overview)
+        self.sidebar.pack(fill="both", expand=True)
+        self.paned.add(self.sidebar_container, minsize=140)
+
+        # === Main content frame (inside paned window) ===
+        self.main_frame = customtkinter.CTkFrame(self.paned, fg_color="transparent")
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.paned.add(self.main_frame, minsize=400)
+
+        # Add terminal, graph, and other stuff into main_frame
+        self.terminal = TerminalOutput(self.main_frame)
+        self.terminal.grid(row=2, column=0, sticky="nsew", padx=20, pady=10)
+
+        self.value_display = ValueDisplay(self.main_frame,self.running)
+        self.value_display.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
+
+        self.graph = GraphComponent(self.main_frame)
+        self.graph.grid(row=0, column=0, sticky="nsew", padx=20, pady=10)
+
+        self.controls = ControlButtons(self.main_frame, self.start_action, self.stop_action)
+        self.controls.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 10))
         self.utils = CalibrationUtils("./Utils/calibration.db")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -112,12 +134,16 @@ class App(customtkinter.CTk):
 
             threading.Thread(target=self.generate_values, daemon=True).start()
             self.terminal.log("Generating values...")
+            self.controls.stop_button.configure(state="enabled",fg_color="red")
+        self.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
 
     def stop_action(self):
         """ Stop generating values """
         self.running = False
         self.terminal.log("Stopped.")
         self.database_overview.populate_dropdown()
+        self.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
+        self.controls.start_button.configure(state="enabled",fg_color="steel blue")
 
     def generate_values(self):
         """ Generate one new value per second, updating values and differences with terminal logging """
@@ -140,7 +166,7 @@ class App(customtkinter.CTk):
             self.terminal.log(f"Executing: Measure {self.sidebar.selected_mode} at index {index} (ref: {reference} {unit})")
 
             # Generate new value
-            new_value = round(random.uniform(0, 1000), 2)
+            new_value = round(random.uniform(0, 1000000000), 2)/1000000
             current_values[index] = {"Value": new_value, "Label": unit}
             # Compute difference and update
             difference = round(random.uniform(-1000, 1000), 2)/1000

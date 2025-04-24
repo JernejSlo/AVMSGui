@@ -16,5 +16,6 @@ class ControlButtons(customtkinter.CTkFrame):
         self.start_button.grid(row=0, column=0, padx=10, pady=10)
 
         # Stop Button
-        self.stop_button = customtkinter.CTkButton(self.button_frame, text="Stop", command=stop_callback, fg_color="red", width=120)
+        self.stop_button = customtkinter.CTkButton(self.button_frame,text_color_disabled="white",state="disabled", text="Stop", command=stop_callback, fg_color="#B0B0B0", width=120,)
         self.stop_button.grid(row=0, column=1, padx=10, pady=10)
+
