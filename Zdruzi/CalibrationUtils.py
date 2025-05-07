@@ -105,12 +105,25 @@ class CalibrationUtils():
     def changeMeasParam(self,typeOfMeas: str):
         match typeOfMeas:
             case 'DCV':
+                pass
 
             case 'ACV':
+                pass
+
             case 'DCI':
+                pass
+
             case 'ACI':
+                pass
+
             case 'OHM':
+                pass
+
             case 'FRE':
+                pass
+
+            case _:
+                pass
 
         self.measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
