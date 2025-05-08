@@ -121,21 +121,26 @@ class CalibrationUtils():
 
             case 'DCI':
                 self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
-                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
+                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3] # PROBLEM MOGOČ
                 self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
                 self.measParameters["measType"] = "CURRent"
                 self.measParameters["dirType"] = "DC"
                 pass
 
             case 'ACI':
-                self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
-                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
-                self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
+                self.measParameters["references"] = [0, 1, -1, 3, -3]
+                self.measParameters["range"] = [1, 1, 1, 3, 3]
+                self.measParameters["units"] = ["A", "A", "A", "A", "A"]
                 self.measParameters["measType"] = "CURRent"
                 self.measParameters["dirType"] = "AC"
                 pass
 
             case 'OHM':
+                self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
+                self.measParameters["range"] = [100, 1, 10, 100, 1, 10, 100] # PROBLEM MOGOČ
+                self.measParameters["units"] = ["Ω", "kΩ", "kΩ", "kΩ", "MΩ", "MΩ", "MΩ"]
+                self.measParameters["measType"] = "RESistance" # mogoč RESIstance ali FRESistance
+                self.measParameters["dirType"] = "DC"
                 pass
 
             case 'FRE':
