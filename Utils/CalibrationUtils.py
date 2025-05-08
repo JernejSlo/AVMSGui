@@ -107,7 +107,7 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
-                self.measParameters["measType"] = "Voltage"
+                self.measParameters["measType"] = "VOLTage"
                 self.measParameters["dirType"] = "DC"
                 pass
 
@@ -115,16 +115,24 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 750, -750]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 750, 750]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
-                self.measParameters["measType"] = "Voltage"
+                self.measParameters["measType"] = "VOLTage"
                 self.measParameters["dirType"] = "AC"
                 pass
 
             case 'DCI':
                 self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
-                self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
+                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
+                self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
+                self.measParameters["measType"] = "CURRent"
+                self.measParameters["dirType"] = "DC"
                 pass
 
             case 'ACI':
+                self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
+                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
+                self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
+                self.measParameters["measType"] = "CURRent"
+                self.measParameters["dirType"] = "AC"
                 pass
 
             case 'OHM':
