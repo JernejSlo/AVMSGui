@@ -19,7 +19,7 @@ from Utils.CalibrationUtils import CalibrationUtils
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
 
-class App(customtkinter.CTk):
+class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
         super().__init__()
 
@@ -64,8 +64,10 @@ class App(customtkinter.CTk):
 
         self.controls = ControlButtons(self.main_frame, self.start_action, self.stop_action)
         self.controls.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 10))
-        self.utils = CalibrationUtils("./Utils/calibration.db")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+
+        CalibrationUtils.__init__(self,"./Utils/calibration.db")
 
         self.database_overview = DatabaseOverview(self, self.show_calibration_view)
         self.database_overview.grid(row=0, column=1, rowspan=3, padx=20, pady=20, sticky="nsew")
@@ -76,14 +78,15 @@ class App(customtkinter.CTk):
 
         self.selected_mode = "DCV"
 
+
     def show_calibration_view(self):
         self.database_overview.grid_remove()
         self.show_all_pages()
 
     def on_closing(self):
         """ Cleanup when closing the app """
-        if self.utils.conn:
-            self.utils.close()
+        if self.conn:
+            self.close()
         self.destroy()
 
     def hide_all_pages(self):
@@ -129,10 +132,10 @@ class App(customtkinter.CTk):
             self.running = True
 
             # Create a new calibration in database
-            self.current_calibration_id = self.utils.log_new_calibration(self.selected_mode)
+            self.current_calibration_id = self.log_new_calibration(self.selected_mode)
             self.terminal.log(f"Started new calibration session: ID {self.current_calibration_id}")
 
-            threading.Thread(target=self.generate_values, daemon=True).start()
+            threading.Thread(target=self.get_calibration_values, daemon=True).start()
             self.terminal.log("Generating values...")
             self.controls.stop_button.configure(state="enabled",fg_color="red")
         self.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
@@ -145,7 +148,37 @@ class App(customtkinter.CTk):
         self.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
         self.controls.start_button.configure(state="enabled",fg_color="steel blue")
 
-    def generate_values(self):
+    def get_calibration_values(self):
+        """ Generate one new value per second, updating values and differences with terminal logging """
+
+
+        while self.running:
+            # Get unit and reference for this index
+
+            # Log before
+            #self.terminal.log(f"Executing: Measure {self.sidebar.selected_mode} at index {index} (ref: {reference} {unit})")
+            try:
+                self.calibrate()
+            except Exception as e:
+                print("Returning to fake version.")
+                print(f"Error: {e}")
+                self.get_calibration_values = self.generate_values_no_machine
+                self.generate_values_no_machine()
+                return
+            # Generate new value
+            if self.graph_enabled:
+                graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
+                                {"Value": random.uniform(0, 5), "Label": "A"},
+                                {"Value": random.uniform(0, 1000), "Label": "Ω"}]
+
+                self.graph.update_data(graph_values)
+
+            # Log result
+            #self.terminal.log(f"Updated index {index}: {new_value} {unit}, Δ = {difference} {unit}")
+            time.sleep(1)
+            self.running = False
+
+    def generate_values_no_machine(self):
         """ Generate one new value per second, updating values and differences with terminal logging """
         total_values = len(self.value_display.value_labels)
 
@@ -176,7 +209,7 @@ class App(customtkinter.CTk):
 
             # Update display
             self.value_display.update_values(current_values, difference_values)
-            self.utils.log_measurement(
+            self.log_measurement(
                 calibration_id=self.current_calibration_id,
                 set_value=reference,
                 calculated_value=new_value,

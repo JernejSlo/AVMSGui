@@ -90,7 +90,7 @@ class CalibrationUtils():
 
         return MeasAverage, stdVar
 
-    def calibrate(self,method):
+    def calibrate(self):
 
         self.HP34401A = self.rm.open_resource('GPIB0::22::INSTR')
         self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
@@ -155,7 +155,7 @@ class CalibrationUtils():
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
             "linearMeas": [None, None, None, None, None, None, None, None, None, None],
             "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
-            "linearStdVars": [None, None, None, None, None, None, None, None, None, None]
+            "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
             "measType": "dsfdsf",
             "dirType": "fsdfsdf"
         }
