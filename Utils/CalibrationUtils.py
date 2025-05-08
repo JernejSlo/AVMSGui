@@ -107,15 +107,21 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
+                self.measParameters["measType"] = "Voltage"
+                self.measParameters["dirType"] = "DC"
                 pass
 
             case 'ACV':
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 750, -750]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 750, 750]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
+                self.measParameters["measType"] = "Voltage"
+                self.measParameters["dirType"] = "AC"
                 pass
 
             case 'DCI':
+                self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
+                self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 pass
 
             case 'ACI':
@@ -142,6 +148,8 @@ class CalibrationUtils():
             "linearMeas": [None, None, None, None, None, None, None, None, None, None],
             "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
             "linearStdVars": [None, None, None, None, None, None, None, None, None, None]
+            "measType": "dsfdsf",
+            "dirType": "fsdfsdf"
         }
 
 
