@@ -8,7 +8,7 @@ class DatabaseOverview(customtkinter.CTkFrame):
         super().__init__(parent, fg_color="transparent")
         self.grid(row=0, column=1, rowspan=3, padx=20, pady=20, sticky="nsew")
 
-        self.database = parent.utils.conn
+        self.database = parent.conn
         self.selected_calibration = None
         self.callback = callback
 
