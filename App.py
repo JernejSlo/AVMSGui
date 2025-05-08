@@ -111,6 +111,9 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.selected_mode = "DCV"
         self.show_terminal()
 
+        self.pause_event = threading.Event()
+        self.prompt_shown = False
+
     def show_terminal(self):
         self.graph.pack_forget()
         self.terminal.pack(fill="both", expand=True)
@@ -120,6 +123,8 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.terminal.pack_forget()
         self.graph.pack(fill="both", expand=True)
         self.bottom_bar.highlight_graph()
+
+        self.graph_enabled = True
 
     def show_calibration_view(self):
         self.database_overview.grid_remove()
@@ -262,8 +267,34 @@ class App(customtkinter.CTk,CalibrationUtils):
             index = (index + 1) % total_values
             time.sleep(1)
 
+            # Pause after 10th value if in "2Ω" mode
+            if self.selected_mode == "2Ω" and index == 2 and not self.prompt_shown:
+                self.prompt_shown = True
+                self.running = False
+                self.after(100, self.show_pause_popup)  # Show popup in main thread
+                return  # Exit loop
+
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
+
+    def show_pause_popup(self):
+        popup = customtkinter.CTkToplevel(self)
+        popup.title("Change measurement setup")
+        popup.geometry("500x150")
+        popup.transient(self)
+        popup.grab_set()
+
+        label = customtkinter.CTkLabel(popup, text="To continue calibration connect with 4 leads system (switch from 2 leads to 4).\n "
+                                                   "After doing so, press continue.")
+        label.pack(pady=20)
+
+        def resume():
+            popup.destroy()
+            self.running = True
+            threading.Thread(target=self.generate_values_no_machine, daemon=True).start()
+
+        btn = customtkinter.CTkButton(popup, text="Continue", command=resume)
+        btn.pack(pady=10)
 
 
 if __name__ == "__main__":
