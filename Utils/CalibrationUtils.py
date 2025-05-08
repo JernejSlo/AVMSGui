@@ -1,13 +1,210 @@
 import os
 import sqlite3
 from datetime import datetime
+import pyvisa
 
 class CalibrationUtils():
 
-    def __init__(self, db_name):
+    def __init__(self,db_name):
+        # database stuff
         self.db_name = db_name
         self.conn = None
         self.ensure_connection()
+
+        # actual calibration stuff
+        self.rm = pyvisa.ResourceManager()
+
+        self.index = 0
+
+        total_values = len(self.value_display.value_labels)
+
+        self.current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
+        self.difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
+
+
+        self.measParameters = {
+            "numOfMeas": 5,
+            "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
+            "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
+            "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
+            "measurements": [None, None, None, None, None, None, None, None, None, None, None],
+            "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
+            "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
+            "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "linearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "linearStdVars": [None, None, None, None, None, None, None, None, None, None]
+        }
+
+        pass
+
+    def log_everything(self,idx=0):
+
+        unit = self.measParameters["units"][idx]
+        measurement = self.measParameters["measurements"][idx]
+        if measurement is None:
+            measurement = "--"
+        diff = self.measParameters["differences"][idx]
+        if diff is None:
+            diff = "--"
+        std = self.measParameters["stdVars"][idx]
+        if std is None:
+            std = "--"
+
+        # Generate new value
+        self.current_values[idx] = {"Value": measurement, "Label": unit}
+        # Compute difference and update
+        self.difference_values[idx] = {"Value": diff, "Label": unit}
+
+        self.value_display.labels_values["differences"][idx] = diff
+
+        # Update display
+        self.value_display.update_values(self.current_values, self.difference_values)
+
+
+        self.terminal.log(f'{measurement}')
+
+
+
+    def calibrate(self,method):
+        def waitForSettled():
+            SETTLED = 12
+            while not (int(self.F5522A.query('ISR?')) & (1 << SETTLED)):
+                pass
+
+        def measurment(numOfMeas: int, measRange: float):
+            # inicializacija lista z dimenzijo numOfMeas
+            MeasArray = [None] * numOfMeas
+
+            # ponovitev meritev tolikokrat kot je vrednost numOfMeas
+            for SameMeasNum in range(numOfMeas):
+                HP34401A_string = f"{'MEASure:VOLTage:DC?'} {str(measRange)}"
+                self.terminal.log(HP34401A_string)
+                Meas = float(self.HP34401A.query(HP34401A_string))
+                self.terminal.log(str(Meas))
+                MeasArray[SameMeasNum] = Meas
+                self.log_everything(SameMeasNum)
+
+            # izračun povprečne vrednosti meritev
+            MeasAverage = sum(MeasArray)/numOfMeas
+
+            # izračun standardne deviacije meritev
+            stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1))**(1/2)
+
+            return MeasAverage, stdVar
+
+        self.HP34401A = self.rm.open_resource('GPIB0::22::INSTR')
+        self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
+        self.HP34401A.timeout = 2500
+        self.F5522A.timeout = 2500
+        rangeVDC = [0.1, 1, 10, 100, 1000]
+
+
+        self.measure()
+
+    def changeMeasParam(self,typeOfMeas: str):
+        match typeOfMeas:
+            case 'DCV':
+                pass
+
+            case 'ACV':
+                pass
+
+            case 'DCI':
+                pass
+
+            case 'ACI':
+                pass
+
+            case 'OHM':
+                pass
+
+            case 'FRE':
+                pass
+
+            case _:
+                pass
+
+        self.measParameters = {
+            "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
+            "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
+            "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
+            "measurements": [None, None, None, None, None, None, None, None, None, None, None],
+            "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
+            "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
+            "numOfMeas": 5,
+            "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "linearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "linearStdVars": [None, None, None, None, None, None, None, None, None, None]
+        }
+
+
+    def measProcess(self):
+        for i in range(16):
+            F5522A.query('ERR?')
+
+        # prvi del kalibracije
+        for MeasNum in range(len(self.measParameters["references"])):
+            # konfiguracija meritve na multimetru HP34401A
+            HP34401A_string = f"{'CONFigure:'}{Voltage}{':'}{DC} {str(self.measParameters["range"][MeasNum])}"
+            self.terminal.log(f'IN HP34401A: {HP34401A_string}')
+            HP34401A.write(HP34401A_string)
+
+            # konfiguracija referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = f"{'OUT'} {str(self.measParameters["references"][MeasNum])} {str(self.measParameters["units"][MeasNum])}"
+            self.terminal.log(f'IN F5522A: {F5522A_string}'
+
+            F5522A.write(F5522A_string)
+
+            # vklop referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = 'OPER'
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
+            F5522A.write(F5522A_string)
+
+            # čakanje na izravnavo referenčne vrednosti
+            waitForSettled()
+
+            # izračun in zapis meritve
+            [MeasAverage, stdVar] = measurment(self.measurement_parameters["numOfMeas"], self.measurement_parameters["range"][MeasNum])
+            self.measurement_parameters["measurements"][MeasNum] = MeasAverage
+            self.measurement_parameters["stdVars"][MeasNum] = stdVar
+
+            # izklop referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = 'STBY'
+            self.terminal.log(F5522A_string)
+            F5522A.write(F5522A_string)
+
+        # konfiguracija meritve na multimetru HP34401A
+        HP34401A_string = "CONFigure:VOLTage:DC 10"
+        self.terminal.log(f'IN HP34401A: {HP34401A_string}' )
+        HP34401A.write(HP34401A_string)
+
+        for MeasNum in range(len(self.measurement_parameters["linearRefs"])):
+
+            # konfiguracija referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = f"{'OUT'} {str(self.measurement_parameters["linearRefs"][MeasNum])} {'V'}"
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
+            F5522A.write(F5522A_string)
+
+            # vklop referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = 'OPER'
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
+            F5522A.write(F5522A_string)
+
+            # čakanje na izravnavo referenčne vrednosti
+            waitForSettled()
+
+            # izračun in zapis meritve
+            HP34401A_string = "MEASure:VOLTage:DC? 10"
+            [MeasAverage, stdVar] = measurment(self.measurement_parameters["numOfMeas"], measRange = 10)
+            self.measurement_parameters["linearMeas"][MeasNum] = MeasAverage
+            self.measurement_parameters["linearStdVars"][MeasNum] = stdVar
+
+            # izklop referenčne vrednosti na kalibratorju F5522A
+            F5522A_string = 'STBY'
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
+            F5522A.write(F5522A_string)
 
     def ensure_connection(self):
         """ Make sure the database exists and open a connection """
@@ -78,13 +275,5 @@ class CalibrationUtils():
         self.conn.commit()
         print(f"Measurement logged for calibration ID {calibration_id}.")
 
-"""utils = CalibrationUtils()
 
-# Step 1: Create database (only needed once)
-utils.create_db("calibration.db")
 
-# Step 2: Add a new calibration
-calib_id = utils.log_new_calibration("calibration.db", "DCV")
-
-# Step 3: Log a measurement set_value, calculated_value, ref_set_diff, std
-utils.log_measurement("calibration.db", calib_id, 297.7, 296.6, 1.1, 0.3)"""
