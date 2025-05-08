@@ -4,22 +4,31 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from Utils.color_theme import COLORS
+
 
 class GraphComponent(customtkinter.CTkFrame):
     """ Real-time updating graph component (Uses CustomTkinter default background) """
 
     def __init__(self, parent):
-        super().__init__(parent, fg_color="transparent")
+
+
+        self.default_color = COLORS["backgroundLight"]
+        self.active_color = COLORS["backgroundDark"]
+        self.hover_color = COLORS["hover"]
+        self.text_color = COLORS["lg_text"]
+
+        super().__init__(parent, fg_color=self.default_color)
 
         self.grid(row=1, column=1, padx=(20, 20), pady=(10, 10), sticky="nsew")
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.default_bg_color = "#222222"
+        self.default_bg_color = self.default_color
         plt.style.use("dark_background")
 
         # === Left Side: Value Display ===
-        self.value_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        self.value_frame = customtkinter.CTkFrame(self, fg_color=self.default_color)
         self.value_frame.grid(row=0, column=0, padx=(10, 10), pady=10, sticky="n")
 
         self.value_labels = ["Voltage", "Current", "Resistance"]
@@ -33,7 +42,7 @@ class GraphComponent(customtkinter.CTkFrame):
             self.value_data_labels.append(value_label)
 
         # === Right Side: Graph Frame ===
-        self.graph_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        self.graph_frame = customtkinter.CTkFrame(self, fg_color=self.default_color)
         self.graph_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         self.graph_frame.grid_rowconfigure(0, weight=1)
         self.graph_frame.grid_rowconfigure(1, weight=0)
@@ -54,7 +63,7 @@ class GraphComponent(customtkinter.CTkFrame):
 
         # === Controls Below the Graph ===
         # === Controls Below the Graph ===
-        self.bottom_control_frame = customtkinter.CTkFrame(self.graph_frame, fg_color="transparent")
+        self.bottom_control_frame = customtkinter.CTkFrame(self.graph_frame, fg_color=self.default_color)
         self.bottom_control_frame.grid(row=1, column=0, pady=(5, 0))
 
         shared_btn_width = 40

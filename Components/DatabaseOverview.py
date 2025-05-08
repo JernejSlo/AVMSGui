@@ -1,11 +1,21 @@
 import customtkinter
 
+from Utils.color_theme import COLORS
+
 
 class DatabaseOverview(customtkinter.CTkFrame):
     """ Database overview to review past calibrations """
 
     def __init__(self, parent, callback):
-        super().__init__(parent, fg_color="transparent")
+
+
+        self.default_color = COLORS["backgroundLight"]
+        self.active_color = COLORS["backgroundDark"]
+        self.hover_color = COLORS["hover"]
+        self.text_color = COLORS["lg_text"]
+
+
+        super().__init__(parent, fg_color=self.default_color,bg_color=self.default_color)
         self.grid(row=0, column=1, rowspan=3, padx=20, pady=20, sticky="nsew")
 
         self.database = parent.conn
@@ -26,7 +36,7 @@ class DatabaseOverview(customtkinter.CTkFrame):
         self.dropdown.grid(row=1, column=0, pady=(0, 10), sticky="ew")
 
         # === Frame to hold session data + scrollbar ===
-        self.scrollable_frame = customtkinter.CTkScrollableFrame(self, fg_color="transparent")
+        self.scrollable_frame = customtkinter.CTkScrollableFrame(self, fg_color=self.default_color,bg_color=self.default_color)
         self.scrollable_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 10))
         self.scrollable_frame.grid_columnconfigure(0, weight=1)
 

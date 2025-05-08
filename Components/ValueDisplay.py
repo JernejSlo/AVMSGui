@@ -1,14 +1,24 @@
 import customtkinter
 
+from Utils.color_theme import COLORS
+
 
 class ValueDisplay(customtkinter.CTkFrame):
     """ Displays real-time values with labels """
     def __init__(self, parent, running):
+
+
+        self.default_color = COLORS["backgroundLight"]
+        self.active_color = COLORS["backgroundDark"]
+        self.hover_color = COLORS["hover"]
+        self.text_color = COLORS["lg_text"]
+
+
         self.running = running
         self.vals = []
         self.diffs = []
-        super().__init__(parent, fg_color="transparent")
-        self.grid(row=1, column=1, padx=(20, 20), pady=(10, 10), sticky="nsew")
+        super().__init__(parent, fg_color=self.default_color)
+        self.grid(row=1, column=1, padx=(20, 20), pady=(10, 80), sticky="nsew")
 
 
 

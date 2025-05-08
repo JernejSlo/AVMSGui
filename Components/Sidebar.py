@@ -1,9 +1,20 @@
 import customtkinter
 
+from Utils.color_theme import COLORS
+
+
 class Sidebar(customtkinter.CTkFrame):
     """ Sidebar with measurement buttons and UI options """
     def __init__(self, parent, mode_callback, scaling_callback, overview_callback):
-        super().__init__(parent, width=140, corner_radius=0)
+
+
+
+        self.default_color = COLORS["backgroundLight"]
+        self.active_color = COLORS["backgroundDark"]
+        self.hover_color = COLORS["hover"]
+        self.text_color = COLORS["lg_text"]
+
+        super().__init__(parent, width=140, corner_radius=0,fg_color=self.default_color,bg_color=self.default_color)
         self.grid(row=0, column=0, rowspan=3, sticky="nsew")
 
         # Title Label

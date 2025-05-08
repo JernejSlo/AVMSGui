@@ -16,7 +16,7 @@ class CalibrationUtils():
 
         self.index = 0
 
-        total_values = len(self.value_display.value_labels)
+        total_values = len(self.upper_panel.value_display.value_labels)
 
         self.current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
         self.difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]

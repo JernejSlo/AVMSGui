@@ -1,5 +1,6 @@
 import tkinter as tk
 import customtkinter
+import gpib_ctypes
 import pyvisa
 import random
 import threading
@@ -15,8 +16,12 @@ from Components.DatabaseOverview import DatabaseOverview
 from Components.Graph import GraphComponent
 from Components.OutputTerminal import TerminalOutput
 from Components.Sidebar import Sidebar
+from Components.UpperPanel import UpperPanel
 from Components.ValueDisplay import ValueDisplay
+from Components.BottomTabBar import BottomTabBar
+
 from Utils.CalibrationUtils import CalibrationUtils
+from Utils.color_theme import COLORS
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("blue")
@@ -24,6 +29,12 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
         super().__init__()
+        self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
+
+        self.default_color = COLORS["backgroundLight"]
+        self.active_color = COLORS["backgroundDark"]
+        self.hover_color = COLORS["hover"]
+        self.text_color = COLORS["lg_text"]
 
         self.title("kalibrator.py")
         self.geometry(f"{1100}x{700}")
@@ -38,7 +49,7 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.grid_rowconfigure(2, weight=1)
 
         # Paned container for resizable layout
-        self.paned = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashwidth=6, bg="#333", showhandle=True)
+        self.paned = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashwidth=6, bg=self.default_color, showhandle=True)
         self.paned.grid(row=0, column=0, rowspan=3, columnspan=2, sticky="nsew")
 
         # === Sidebar container (inside paned window) ===
@@ -48,24 +59,43 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.sidebar.pack(fill="both", expand=True)
         self.paned.add(self.sidebar_container, minsize=140)
 
-        # === Main content frame (inside paned window) ===
-        self.main_frame = customtkinter.CTkFrame(self.paned, fg_color="transparent")
+        # === Main Frame Split Vertically ===
+
+        self.main_frame = customtkinter.CTkFrame(self.paned, fg_color=self.default_color,bg_color=self.default_color)
+        self.paned.add(self.main_frame)
+
+        # === Create a vertical PanedWindow inside main_frame ===
+        self.vertical_pane = tk.PanedWindow(self.main_frame, orient=tk.VERTICAL, sashwidth=6, bg=self.default_color,
+                                            showhandle=True,background=self.default_color)
+        self.vertical_pane.pack(fill="both", expand=True)
+
+        # === Upper and lower panels ===
+
+        self.upper_panel = UpperPanel(self.vertical_pane,self.running,self.start_action, self.stop_action)
+
+        self.lower_panel = customtkinter.CTkFrame(self.vertical_pane, fg_color="transparent", height=100)
+
+        self.vertical_pane.add(self.upper_panel)
+        self.vertical_pane.add(self.lower_panel)
+
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(0, weight=1)
         self.paned.add(self.main_frame, minsize=400)
 
-        # Add terminal, graph, and other stuff into main_frame
-        self.terminal = TerminalOutput(self.main_frame)
-        self.terminal.grid(row=2, column=0, sticky="nsew", padx=20, pady=10)
+        # === Inside Lower Panel (Graph + Terminal toggle) ===
+        self.graph = GraphComponent(self.lower_panel)
+        self.terminal = TerminalOutput(self.lower_panel)
 
-        self.value_display = ValueDisplay(self.main_frame,self.running)
-        self.value_display.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
+        self.graph.pack_forget()
+        self.terminal.grid(row=0, column=0, sticky="nsew")
 
-        self.graph = GraphComponent(self.main_frame)
-        self.graph.grid(row=0, column=0, sticky="nsew", padx=20, pady=10)
+        self.lower_panel.grid_rowconfigure(0, weight=1)
+        self.lower_panel.grid_columnconfigure(0, weight=1)
 
-        self.controls = ControlButtons(self.main_frame, self.start_action, self.stop_action)
-        self.controls.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 10))
+        # === Bottom Tab Bar ===
+        self.bottom_bar = BottomTabBar(self, self.show_terminal, self.show_graph)
+        self.bottom_bar.grid(row=3, column=0, columnspan=2, sticky="ew")
+
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 
@@ -80,6 +110,15 @@ class App(customtkinter.CTk,CalibrationUtils):
 
         self.selected_mode = "DCV"
 
+    def show_terminal(self):
+        self.graph.pack_forget()
+        self.terminal.pack(fill="both", expand=True)
+        self.bottom_bar.highlight_terminal()
+
+    def show_graph(self):
+        self.terminal.pack_forget()
+        self.graph.pack(fill="both", expand=True)
+        self.bottom_bar.highlight_graph()
 
     def show_calibration_view(self):
         self.database_overview.grid_remove()
@@ -95,22 +134,14 @@ class App(customtkinter.CTk,CalibrationUtils):
         """ Switch to Database Overview screen """
 
         # Hide calibration components
-        self.value_display.grid_remove()
-        self.graph.grid_remove()
-        self.controls.grid_remove()
-        self.terminal.grid_remove()
-
+        self.bottom_bar.grid_remove()
+        self.paned.grid_remove()
     def show_all_pages(self):
         """ Switch to Database Overview screen """
 
         # Hide calibration components
-        self.value_display.grid()
-        if self.graph_enabled:
-            self.graph.grid()
-        else:
-            self.graph.grid_remove()
-        self.controls.grid()
-        self.terminal.grid()
+        self.bottom_bar.grid()
+        self.paned.grid()
 
     def show_database_overview(self):
         self.hide_all_pages()
@@ -121,12 +152,6 @@ class App(customtkinter.CTk,CalibrationUtils):
         """ Update title and show graph if needed """
         self.terminal.log(f"Mode selected: {mode}")
         self.selected_mode = mode
-        self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
-
-        if self.graph_enabled:
-            self.graph.grid()
-        else:
-            self.graph.grid_remove()
 
     def start_action(self):
         """ Start generating random values """
@@ -139,16 +164,16 @@ class App(customtkinter.CTk,CalibrationUtils):
 
             threading.Thread(target=self.get_calibration_values, daemon=True).start()
             self.terminal.log("Generating values...")
-            self.controls.stop_button.configure(state="enabled",fg_color="red")
-        self.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
+            self.upper_panel.controls.stop_button.configure(state="enabled",fg_color="red")
+        self.upper_panel.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
 
     def stop_action(self):
         """ Stop generating values """
         self.running = False
         self.terminal.log("Stopped.")
         self.database_overview.populate_dropdown()
-        self.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
-        self.controls.start_button.configure(state="enabled",fg_color="steel blue")
+        self.upper_panel.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
+        self.upper_panel.controls.start_button.configure(state="enabled",fg_color="steel blue")
 
     def get_calibration_values(self):
         """ Generate one new value per second, updating values and differences with terminal logging """
@@ -187,7 +212,7 @@ class App(customtkinter.CTk,CalibrationUtils):
 
     def generate_values_no_machine(self):
         """ Generate one new value per second, updating values and differences with terminal logging """
-        total_values = len(self.value_display.value_labels)
+        total_values = len(self.upper_panel.value_display.value_labels)
 
         current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
         difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
@@ -196,8 +221,8 @@ class App(customtkinter.CTk,CalibrationUtils):
         while self.running:
             # Get unit and reference for this index
             try:
-                unit = self.value_display.labels_values["units"][index]
-                reference = self.value_display.labels_values["references"][index]
+                unit = self.upper_panel.value_display.labels_values["units"][index]
+                reference = self.upper_panel.value_display.labels_values["references"][index]
             except IndexError:
                 unit = "mV"
                 reference = 0
@@ -212,10 +237,10 @@ class App(customtkinter.CTk,CalibrationUtils):
             difference = round(random.uniform(-1000, 1000), 2)/1000
             difference_values[index] = {"Value": difference, "Label": unit}
 
-            self.value_display.labels_values["differences"][index] = difference
+            self.upper_panel.value_display.labels_values["differences"][index] = difference
 
             # Update display
-            self.value_display.update_values(current_values, difference_values)
+            self.upper_panel.value_display.update_values(current_values, difference_values)
             self.log_measurement(
                 calibration_id=self.current_calibration_id,
                 set_value=reference,
