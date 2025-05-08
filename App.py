@@ -109,6 +109,7 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.graph.grid_remove()
 
         self.selected_mode = "DCV"
+        self.show_terminal()
 
     def show_terminal(self):
         self.graph.pack_forget()
