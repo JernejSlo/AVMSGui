@@ -4,6 +4,8 @@ import pyvisa
 import random
 import threading
 import time
+import traceback
+from colorama import init, Fore, Style
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
@@ -161,7 +163,12 @@ class App(customtkinter.CTk,CalibrationUtils):
                 self.calibrate()
             except Exception as e:
                 print("Returning to fake version.")
-                print(f"Error: {e}")
+                print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
+                print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
+                print(Fore.CYAN + Style.BRIGHT + "Traceback:")
+                traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
+                for line in traceback_lines:
+                    print(Fore.CYAN + line, end='')  # 'end' avoids double newlines
                 self.get_calibration_values = self.generate_values_no_machine
                 self.generate_values_no_machine()
                 return
