@@ -183,6 +183,7 @@ class CalibrationUtils():
         for MeasNum in range(len(self.measurement_parameters["linearRefs"])):
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
+            # bla bla
             F5522A_string = f"{'OUT'} {str(self.measurement_parameters["linearRefs"][MeasNum])} {'V'}"
             self.terminal.log(f'IN F5522A: {F5522A_string}')
             F5522A.write(F5522A_string)
