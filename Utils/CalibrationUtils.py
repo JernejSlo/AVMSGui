@@ -105,9 +105,15 @@ class CalibrationUtils():
     def changeMeasParam(self,typeOfMeas: str):
         match typeOfMeas:
             case 'DCV':
+                self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
+                self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
+                self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
                 pass
 
             case 'ACV':
+                self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 750, -750]
+                self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 750, 750]
+                self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
                 pass
 
             case 'DCI':
@@ -125,7 +131,7 @@ class CalibrationUtils():
             case _:
                 pass
 
-        self.measParameters = {
+        measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
@@ -166,25 +172,14 @@ class CalibrationUtils():
             waitForSettled()
 
             # izračun in zapis meritve
-            [MeasAverage, stdVar] = measurment(self.measurement_parameters["numOfMeas"], self.measurement_parameters["range"][MeasNum])
-            self.measurement_parameters["measurements"][MeasNum] = MeasAverage
-            self.measurement_parameters["stdVars"][MeasNum] = stdVar
 
-            # izklop referenčne vrednosti na kalibratorju F5522A
-            F5522A_string = 'STBY'
-            self.terminal.log(F5522A_string)
-            F5522A.write(F5522A_string)
 
-        # konfiguracija meritve na multimetru HP34401A
-        HP34401A_string = "CONFigure:VOLTage:DC 10"
-        self.terminal.log(f'IN HP34401A: {HP34401A_string}' )
-        HP34401A.write(HP34401A_string)
 
         for MeasNum in range(len(self.measurement_parameters["linearRefs"])):
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
             # bla bla
-            F5522A_string = f"{'OUT'} {str(self.measurement_parameters["linearRefs"][MeasNum])} {'V'}"
+            F5522A_string = f"{'OUT'} {str(self.measParameters["linearRefs"][MeasNum])} {'V'}"
             self.terminal.log(f'IN F5522A: {F5522A_string}')
             F5522A.write(F5522A_string)
 
