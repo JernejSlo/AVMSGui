@@ -64,41 +64,39 @@ class CalibrationUtils():
 
         self.terminal.log(f'{measurement}')
 
+    def waitForSettled(self):
+        SETTLED = 12
+        while not (int(self.F5522A.query('ISR?')) & (1 << SETTLED)):
+            pass
 
+    def measurement(self,numOfMeas: int, measRange: float):
+        # inicializacija lista z dimenzijo numOfMeas
+        MeasArray = [None] * numOfMeas
+
+        # ponovitev meritev tolikokrat kot je vrednost numOfMeas
+        for SameMeasNum in range(numOfMeas):
+            HP34401A_string = f"{'MEASure:VOLTage:DC?'} {str(measRange)}"
+            self.terminal.log(HP34401A_string)
+            Meas = float(self.HP34401A.query(HP34401A_string))
+            self.terminal.log(str(Meas))
+            MeasArray[SameMeasNum] = Meas
+            self.log_everything(SameMeasNum)
+
+        # izračun povprečne vrednosti meritev
+        MeasAverage = sum(MeasArray) / numOfMeas
+
+        # izračun standardne deviacije meritev
+        stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1)) ** (1 / 2)
+
+        return MeasAverage, stdVar
 
     def calibrate(self,method):
-        def waitForSettled():
-            SETTLED = 12
-            while not (int(self.F5522A.query('ISR?')) & (1 << SETTLED)):
-                pass
-
-        def measurment(numOfMeas: int, measRange: float):
-            # inicializacija lista z dimenzijo numOfMeas
-            MeasArray = [None] * numOfMeas
-
-            # ponovitev meritev tolikokrat kot je vrednost numOfMeas
-            for SameMeasNum in range(numOfMeas):
-                HP34401A_string = f"{'MEASure:VOLTage:DC?'} {str(measRange)}"
-                self.terminal.log(HP34401A_string)
-                Meas = float(self.HP34401A.query(HP34401A_string))
-                self.terminal.log(str(Meas))
-                MeasArray[SameMeasNum] = Meas
-                self.log_everything(SameMeasNum)
-
-            # izračun povprečne vrednosti meritev
-            MeasAverage = sum(MeasArray)/numOfMeas
-
-            # izračun standardne deviacije meritev
-            stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1))**(1/2)
-
-            return MeasAverage, stdVar
 
         self.HP34401A = self.rm.open_resource('GPIB0::22::INSTR')
         self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
         rangeVDC = [0.1, 1, 10, 100, 1000]
-
 
         self.measure()
 
@@ -142,70 +140,72 @@ class CalibrationUtils():
 
     def measProcess(self):
         for i in range(16):
-            F5522A.query('ERR?')
+            self.F5522A.query('ERR?')
 
         # prvi del kalibracije
         for MeasNum in range(len(self.measParameters["references"])):
             # konfiguracija meritve na multimetru HP34401A
-            HP34401A_string = f"{'CONFigure:'}{Voltage}{':'}{DC} {str(self.measParameters["range"][MeasNum])}"
+            Voltage = "Voltage" # self.measParameters['measurement_type']
+            DC = "DC" # self.measParameters['current_type']
+
+            HP34401A_string = f"{'CONFigure:'}{Voltage}{':'}{DC} {self.measParameters['range'][MeasNum]}"
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
-            HP34401A.write(HP34401A_string)
+            self.HP34401A.write(HP34401A_string)
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
-            F5522A_string = f"{'OUT'} {str(self.measParameters["references"][MeasNum])} {str(self.measParameters["units"][MeasNum])}"
-            self.terminal.log(f'IN F5522A: {F5522A_string}'
+            F5522A_string = f"{'OUT'} {self.measParameters['references'][MeasNum]} {self.measParameters['units'][MeasNum]}"
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
 
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
             # vklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'OPER'
             self.terminal.log(f'IN F5522A: {F5522A_string}')
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
             # čakanje na izravnavo referenčne vrednosti
-            waitForSettled()
+            self.waitForSettled()
 
             # izračun in zapis meritve
-            [MeasAverage, stdVar] = measurment(self.measurement_parameters["numOfMeas"], self.measurement_parameters["range"][MeasNum])
+            [MeasAverage, stdVar] = self.measurement(self.measurement_parameters["numOfMeas"], self.measurement_parameters["range"][MeasNum])
             self.measurement_parameters["measurements"][MeasNum] = MeasAverage
             self.measurement_parameters["stdVars"][MeasNum] = stdVar
 
             # izklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'STBY'
             self.terminal.log(F5522A_string)
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
         # konfiguracija meritve na multimetru HP34401A
         HP34401A_string = "CONFigure:VOLTage:DC 10"
         self.terminal.log(f'IN HP34401A: {HP34401A_string}' )
-        HP34401A.write(HP34401A_string)
+        self.HP34401A.write(HP34401A_string)
 
         for MeasNum in range(len(self.measurement_parameters["linearRefs"])):
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
-            # bla bla
-            F5522A_string = f"{'OUT'} {str(self.measurement_parameters["linearRefs"][MeasNum])} {'V'}"
+            F5522A_string = f"{'OUT'} {str(self.measurement_parameters['linearRefs'][MeasNum])} {'V'}"
             self.terminal.log(f'IN F5522A: {F5522A_string}')
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
             # vklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'OPER'
             self.terminal.log(f'IN F5522A: {F5522A_string}')
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
             # čakanje na izravnavo referenčne vrednosti
-            waitForSettled()
+            self.waitForSettled()
 
             # izračun in zapis meritve
             HP34401A_string = "MEASure:VOLTage:DC? 10"
-            [MeasAverage, stdVar] = measurment(self.measurement_parameters["numOfMeas"], measRange = 10)
+            [MeasAverage, stdVar] = self.measurement(self.measurement_parameters["numOfMeas"], measRange = 10)
             self.measurement_parameters["linearMeas"][MeasNum] = MeasAverage
             self.measurement_parameters["linearStdVars"][MeasNum] = stdVar
 
             # izklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'STBY'
             self.terminal.log(f'IN F5522A: {F5522A_string}')
-            F5522A.write(F5522A_string)
+            self.F5522A.write(F5522A_string)
 
     def ensure_connection(self):
         """ Make sure the database exists and open a connection """
