@@ -46,7 +46,7 @@ class CalibrationUtils():
         measurement = self.measParameters["measurements"][idx]
         if measurement is None:
             measurement = "--"
-        diff = self.measParameters["differences"][idx]
+        diff = self.measParameters["diffMeas"][idx]
         if diff is None:
             diff = "--"
         std = self.measParameters["stdVars"][idx]
@@ -58,10 +58,10 @@ class CalibrationUtils():
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
-        self.value_display.labels_values["differences"][idx] = diff
+        self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
         # Update display
-        self.value_display.update_values(self.current_values, self.difference_values)
+        self.upper_panel.value_display.update_values(self.current_values, self.difference_values)
 
 
         self.terminal.log(f'{measurement}')
@@ -203,6 +203,8 @@ class CalibrationUtils():
             # izračun in zapis meritve
             [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], self.measParameters["range"][MeasNum])
             self.measParameters["measurements"][MeasNum] = MeasAverage
+
+            self.measParameters["measurements"][diffMeas] = 1
             self.measParameters["stdVars"][MeasNum] = stdVar
 
             # izklop referenčne vrednosti na kalibratorju F5522A
@@ -313,5 +315,17 @@ class CalibrationUtils():
         self.conn.commit()
         print(f"Measurement logged for calibration ID {calibration_id}.")
 
+    def conversionRate(self, unit):
+        unit_conversion = 1
+        if unit[0] is "m":
+            print("Converting units.")
+            unit_conversion = 1e-3
+        if unit[0] is "k":
+            print("Converting units.")
+            unit_conversion = 1e3
+        if unit[0] is "M":
+            print("Converting units.")
+            unit_conversion = 1e6
+        return unit_conversion
 
 

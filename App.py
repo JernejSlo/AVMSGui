@@ -208,7 +208,7 @@ class App(customtkinter.CTk,CalibrationUtils):
                     self.get_calibration_values = self.generate_values_no_machine
                     self.generate_values_no_machine()
                 else:
-                    raise Exception
+                    raise e
                 return
             # Generate new value
             if self.graph_enabled:
