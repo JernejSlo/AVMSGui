@@ -34,8 +34,8 @@ class CalibrationUtils():
             "linearMeas": [None, None, None, None, None, None, None, None, None, None],
             "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
             "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
-            "measType": "dsfdsf",
-            "dirType": "fsdfsdf"
+            "measType": "",
+            "dirType": ""
         }
 
         pass
@@ -77,7 +77,7 @@ class CalibrationUtils():
 
         # ponovitev meritev tolikokrat kot je vrednost numOfMeas
         for SameMeasNum in range(numOfMeas):
-            HP34401A_string = f"MEASure:{self.measurement_type}:{self.current_type}? {str(measRange)}"
+            HP34401A_string = f"MEASure:{self.measType}:{self.dirType}? {str(measRange)}"
             self.terminal.log(HP34401A_string)
             Meas = float(self.HP34401A.query(HP34401A_string))
             self.terminal.log(str(Meas))
@@ -100,7 +100,7 @@ class CalibrationUtils():
         self.F5522A.timeout = 2500
         rangeVDC = [0.1, 1, 10, 100, 1000]
 
-
+        self.changeMeasParam(self.selected_mode)
         self.measProcess()
 
     def changeMeasParam(self,typeOfMeas: str):
