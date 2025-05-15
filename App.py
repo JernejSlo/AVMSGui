@@ -28,6 +28,9 @@ customtkinter.set_default_color_theme("blue")
 
 class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
+
+        self.skip_fake_version = True
+
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
@@ -193,15 +196,19 @@ class App(customtkinter.CTk,CalibrationUtils):
             try:
                 self.calibrate()
             except Exception as e:
-                print("Returning to fake version.")
                 print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
                 print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
                 print(Fore.CYAN + Style.BRIGHT + "Traceback:")
                 traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
                 for line in traceback_lines:
                     print(Fore.CYAN + line, end='')  # 'end' avoids double newlines
-                self.get_calibration_values = self.generate_values_no_machine
-                self.generate_values_no_machine()
+
+                if not self.skip_fake_version:
+                    print("Returning to fake version.")
+                    self.get_calibration_values = self.generate_values_no_machine
+                    self.generate_values_no_machine()
+                else:
+                    raise Exception
                 return
             # Generate new value
             if self.graph_enabled:
