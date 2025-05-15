@@ -28,6 +28,7 @@ class CalibrationUtils():
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "measurements": [None, None, None, None, None, None, None, None, None, None, None],
+            #"frequencies": ["10 Hz", "None", None, None, None, None, None, None, None, None],
             "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
             "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -82,7 +83,6 @@ class CalibrationUtils():
             Meas = float(self.HP34401A.query(HP34401A_string))
             self.terminal.log(str(Meas))
             MeasArray[SameMeasNum] = Meas
-            self.log_everything(SameMeasNum)
 
         # izračun povprečne vrednosti meritev
         MeasAverage = sum(MeasArray) / numOfMeas
@@ -122,8 +122,8 @@ class CalibrationUtils():
                 pass
 
             case 'DCI':
-                self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 3, -3]
-                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3] # PROBLEM MOGOČ
+                self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 2.99999, -2.99999]
+                self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
                 self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
                 self.measParameters["measType"] = "CURRent"
                 self.measParameters["dirType"] = "DC"
@@ -168,8 +168,8 @@ class CalibrationUtils():
             "linearMeas": [None, None, None, None, None, None, None, None, None, None],
             "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
             "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
-            "measType": "dsfdsf",
-            "dirType": "fsdfsdf"
+            "measType": "",
+            "dirType": ""
         }
 
 
@@ -202,25 +202,27 @@ class CalibrationUtils():
 
             # izračun in zapis meritve
             [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], self.measParameters["range"][MeasNum])
-            self.measParameters["measurements"][MeasNum] = MeasAverage
+            unitConv = self.convertMeasurments(self.measParameters["units"][MeasNum])
+            self.measParameters["measurements"][MeasNum] = MeasAverage / unitConv
+            self.measParameters["diffMeas"][MeasNum] = self.measParameters["references"][MeasNum] - MeasAverage / unitConv
+            self.measParameters["stdVars"][MeasNum] = stdVar / unitConv
 
-            self.measParameters["measurements"][diffMeas] = 1
-            self.measParameters["stdVars"][MeasNum] = stdVar
+            self.log_everything(MeasNum)
 
             # izklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'STBY'
             self.terminal.log(F5522A_string)
             self.F5522A.write(F5522A_string)
 
-        # konfiguracija meritve na multimetru HP34401A
-        HP34401A_string = f"CONFigure:{self.measType}:{self.dirType} 10"
-        self.terminal.log(f'IN HP34401A: {HP34401A_string}' )
-        self.HP34401A.write(HP34401A_string)
+        if self.measType == "Voltage":
+            # konfiguracija meritve na multimetru HP34401A
+            HP34401A_string = f"CONFigure:{self.measType}:{self.dirType} 10"
+            self.terminal.log(f'IN HP34401A: {HP34401A_string}')
+            self.HP34401A.write(HP34401A_string)
 
-        if self.measType != "Voltage":
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
-                unit = self.measurement_parameters['units'][MeasNum]
+                unit = self.measParameters['units'][MeasNum]
 
                 # konfiguracija referenčne vrednosti na kalibratorju F5522A
                 F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {'V'}"
@@ -315,17 +317,14 @@ class CalibrationUtils():
         self.conn.commit()
         print(f"Measurement logged for calibration ID {calibration_id}.")
 
-    def conversionRate(self, unit):
-        unit_conversion = 1
-        if unit[0] is "m":
-            print("Converting units.")
-            unit_conversion = 1e-3
-        if unit[0] is "k":
-            print("Converting units.")
-            unit_conversion = 1e3
-        if unit[0] is "M":
-            print("Converting units.")
-            unit_conversion = 1e6
-        return unit_conversion
+    def convertMeasurments(self, unit):
+        unitConv = 1
+        if unit[0] == "m":
+            unitConv = 1e-3
+        if unit[0] == "k":
+            unitConv = 1e3
+        if unit[0] == "M":
+            unitConv = 1e6
+        return unitConv
 
 

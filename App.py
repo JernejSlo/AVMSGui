@@ -29,7 +29,7 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
 
-        self.skip_fake_version = False
+        self.skip_fake_version = True
 
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
