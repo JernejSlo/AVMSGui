@@ -31,5 +31,5 @@ class UpperPanel(customtkinter.CTkFrame):
         self.value_display = ValueDisplay(self.content_box, running)
         self.controls = ControlButtons(self.content_box, start_action, stop_action)
 
-        self.value_display.grid(row=0, column=0, pady=(0, 10))
+        self.value_display.grid(row=0, column=0, pady=(0, 10)) # remove to not show at start
         self.controls.grid(row=1, column=0)

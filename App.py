@@ -29,7 +29,7 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
 
-        self.skip_fake_version = True
+        self.skip_fake_version = False
 
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
@@ -111,7 +111,7 @@ class App(customtkinter.CTk,CalibrationUtils):
 
         self.graph.grid_remove()
 
-        self.selected_mode = "DCV"
+        self.selected_mode = ""
         self.show_terminal()
 
         self.pause_event = threading.Event()
@@ -162,6 +162,17 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.terminal.log(f"Mode selected: {mode}")
         self.selected_mode = mode
 
+        # Show the ValueDisplay when a mode is selected
+        if not self.upper_panel.value_display.winfo_ismapped():
+            self.upper_panel.value_display.grid(row=0, column=0, sticky="n")
+
+        # Enable graph only for certain modes
+        self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
+        if self.graph_enabled:
+            self.show_graph()
+        else:
+            self.show_terminal()
+
     def start_action(self):
         """ Start generating random values """
         if not self.running:
@@ -196,12 +207,14 @@ class App(customtkinter.CTk,CalibrationUtils):
             try:
                 self.calibrate()
             except Exception as e:
-                print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
-                print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
-                print(Fore.CYAN + Style.BRIGHT + "Traceback:")
-                traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
-                for line in traceback_lines:
-                    print(Fore.CYAN + line, end='')  # 'end' avoids double newlines
+
+                if not self.skip_fake_version:
+                    print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
+                    print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
+                    print(Fore.CYAN + Style.BRIGHT + "Traceback:")
+                    traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
+                    for line in traceback_lines:
+                        print(Fore.CYAN + line, end='')  # 'end' avoids double newlines
 
                 if not self.skip_fake_version:
                     print("Returning to fake version.")
@@ -250,7 +263,7 @@ class App(customtkinter.CTk,CalibrationUtils):
             difference = round(random.uniform(-1000, 1000), 2)/1000
             difference_values[index] = {"Value": difference, "Label": unit}
 
-            self.upper_panel.value_display.labels_values["differences"][index] = difference
+            self.upper_panel.value_display.labels_values["diffMeas"][index] = difference
 
             # Update display
             self.upper_panel.value_display.update_values(current_values, difference_values)

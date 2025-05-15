@@ -41,7 +41,7 @@ class ValueDisplay(customtkinter.CTkFrame):
                 "references": [0, 0.1, -0.1, 1, -1, 10, -10, 100, -100, 1000, -1000],
                 "units": ["mV"] * 11,
                 "measurements": ["--"] * 11,
-                "differences": ["--"] * 11
+                "diffMeas": ["--"] * 11
             }
             for task in ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ.", "PERIOD"]
         }
@@ -53,7 +53,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         references = self.labels_values["references"]
         units = self.labels_values["units"]
         measurements = self.labels_values["measurements"]
-        differences = self.labels_values["differences"]
+        differences = self.labels_values["diffMeas"]
 
         used_indices = set()
         column = 0
