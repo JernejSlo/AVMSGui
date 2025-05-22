@@ -183,10 +183,12 @@ class CalibrationUtils():
             # konfiguracija meritve na multimetru HP34401A
 
             HP34401A_string = f"{'CONFigure:'}{self.measType}{':'}{self.dirType} {self.measParameters['range'][MeasNum]}"
+            print(HP34401A_string)
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
+
             F5522A_string = f"{'OUT'} {self.measParameters['references'][MeasNum]} {self.measParameters['units'][MeasNum]}"
             self.terminal.log(f'IN F5522A: {F5522A_string}')
 
@@ -214,7 +216,7 @@ class CalibrationUtils():
             self.terminal.log(F5522A_string)
             self.F5522A.write(F5522A_string)
 
-        if self.measType == "Voltage":
+        if self.measType == "VOLTage":
             # konfiguracija meritve na multimetru HP34401A
             HP34401A_string = f"CONFigure:{self.measType}:{self.dirType} 10"
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
