@@ -58,7 +58,7 @@ class App(customtkinter.CTk,CalibrationUtils):
         # === Sidebar container (inside paned window) ===
         self.sidebar_container = customtkinter.CTkFrame(self.paned, corner_radius=0)
         self.sidebar = Sidebar(self.sidebar_container, self.update_title, self.change_scaling,
-                               self.show_database_overview)
+                               self.show_database_overview,self.clear_values)
         self.sidebar.pack(fill="both", expand=True)
         self.paned.add(self.sidebar_container, minsize=140)
 
@@ -117,6 +117,50 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.pause_event = threading.Event()
         self.prompt_shown = False
 
+        self.upper_panel.content_box.grid_remove()
+
+    def update_display_label(self, mode):
+        used_indices = set()
+
+        for i, header in enumerate(self.upper_panel.value_display.headers):
+            if i in used_indices:
+                continue
+
+            references = self.upper_panel.value_display.labels_values["references"]
+            ref = references[i]
+            text_prefix = "Measured at"
+
+            try:
+                neg_index = references.index(-ref)
+            except ValueError:
+                neg_index = None
+
+            is_pair = (
+                    neg_index is not None and
+                    neg_index != i and
+                    neg_index not in used_indices and
+                    ref > 0
+            )
+
+            if is_pair:
+                value_text = f"{text_prefix} ±{abs(ref)}"
+                used_indices.update({i, neg_index})
+            else:
+                value_text = f"{text_prefix} {ref}"
+
+            unit = "V" if mode in ["DCV", "ACV"] else "A"
+            header.configure(text=f"{value_text} {unit}")
+
+    def clear_values(self):
+        """Clear all displayed measurement and difference values."""
+        for val_label in self.upper_panel.value_display.value_labels:
+            val_label.configure(text="--")
+
+        for diff_label in self.upper_panel.value_display.diff_labels:
+            diff_label.configure(text="Δ --")
+
+        self.vals = []
+        self.diffs = []
     def show_terminal(self):
         self.graph.pack_forget()
         self.terminal.pack(fill="both", expand=True)
@@ -162,9 +206,11 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.terminal.log(f"Mode selected: {mode}")
         self.selected_mode = mode
 
+        self.changeMeasParam(mode)
+
         # Show the ValueDisplay when a mode is selected
         if not self.upper_panel.value_display.winfo_ismapped():
-            self.upper_panel.value_display.grid(row=0, column=0, sticky="n")
+            self.upper_panel.content_box.grid(row=0, column=0)
 
         # Enable graph only for certain modes
         self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
@@ -172,6 +218,8 @@ class App(customtkinter.CTk,CalibrationUtils):
             self.show_graph()
         else:
             self.show_terminal()
+
+        self.update_display_label(mode)
 
     def start_action(self):
         """ Start generating random values """

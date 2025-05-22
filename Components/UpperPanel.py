@@ -6,7 +6,6 @@ from Components.ValueDisplay import ValueDisplay
 class UpperPanel(customtkinter.CTkFrame):
     def __init__(self, parent, running, start_action, stop_action):
         super().__init__(parent, fg_color="transparent")
-
         # Full panel stretches
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -33,3 +32,4 @@ class UpperPanel(customtkinter.CTkFrame):
 
         self.value_display.grid(row=0, column=0, pady=(0, 10)) # remove to not show at start
         self.controls.grid(row=1, column=0)
+

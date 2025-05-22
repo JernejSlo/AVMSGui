@@ -7,7 +7,6 @@ class ValueDisplay(customtkinter.CTkFrame):
     """ Displays real-time values with labels """
     def __init__(self, parent, running):
 
-
         self.default_color = COLORS["backgroundLight"]
         self.active_color = COLORS["backgroundDark"]
         self.hover_color = COLORS["hover"]
@@ -49,6 +48,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         self.labels_values = self.labels_per_task["DCV"]
         self.value_labels = []
         self.diff_labels = []
+        self.headers = []
 
         references = self.labels_values["references"]
         units = self.labels_values["units"]
@@ -77,11 +77,12 @@ class ValueDisplay(customtkinter.CTkFrame):
 
             if is_pair:
                 # Header
-                customtkinter.CTkLabel(
-                    self, text=f"Measured at ±{ref}",
+                header = customtkinter.CTkLabel(
+                    self, text=f"Measured at ±{ref}V",
                     font=customtkinter.CTkFont(size=15, weight="bold"),
                     width=header_width
-                ).grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
+                )
+                header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
 
                 # Value labels
                 label_pos = customtkinter.CTkLabel(
@@ -113,16 +114,18 @@ class ValueDisplay(customtkinter.CTkFrame):
 
                 self.value_labels.extend([label_pos, label_neg])
                 self.diff_labels.extend([diff_pos, diff_neg])
+                self.headers.append(header)
                 used_indices.update({i, neg_index})
                 column += 2
 
             else:
                 # Single-entry header
-                customtkinter.CTkLabel(
-                    self, text=f"Measured at {ref}",
+                header = customtkinter.CTkLabel(
+                    self, text=f"Measured at {ref}V",
                     font=customtkinter.CTkFont(size=15, weight="bold"),
                     width=header_width
-                ).grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
+                )
+                header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
 
                 val_label = customtkinter.CTkLabel(
                     self, text=f"{measurements[i]} {units[i]}",
@@ -140,6 +143,7 @@ class ValueDisplay(customtkinter.CTkFrame):
 
                 self.value_labels.append(val_label)
                 self.diff_labels.append(diff_label)
+                self.headers.append(header)
                 used_indices.add(i)
                 column += 2
 
@@ -185,6 +189,7 @@ class ValueDisplay(customtkinter.CTkFrame):
             self.update_values(self.vals,self.diffs)
 
 
+
     def update_values(self, values, differences):
         """ Update the displayed values and differences """
         self.vals = values
@@ -213,6 +218,7 @@ class ValueDisplay(customtkinter.CTkFrame):
                 # Update labels
                 self.value_labels[i].configure(text=f"{value_str} {label}")
                 self.diff_labels[i].configure(text=f"Δ {diff_str} {label}")
+
 
             except (IndexError, KeyError, TypeError, ValueError):
                 # Fallback in case of mismatch or formatting error
