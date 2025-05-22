@@ -23,7 +23,7 @@ class Sidebar(customtkinter.CTkFrame):
         self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         # Measurement Mode Buttons
-        button_labels = ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ.", "PERIOD"]
+        button_labels = ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ."]
         for i, label in enumerate(button_labels):
             btn = customtkinter.CTkButton(
                 self,

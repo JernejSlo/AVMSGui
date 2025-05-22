@@ -119,40 +119,63 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.upper_panel.content_box.grid_remove()
 
     def update_display_label(self, mode):
-        used_indices = set()
         j = 0
         for i, header in enumerate(self.upper_panel.value_display.headers):
-            if j in used_indices:
-                j+=1
-            print(j)
             references = self.measParameters["references"]
+            units = self.measParameters["units"]
+
+            if j < len(references):
+                val = self.upper_panel.value_display.value_labels[j]
+                diff = self.upper_panel.value_display.diff_labels[j]
+            if j < len(references)-1:
+                val2 = self.upper_panel.value_display.value_labels[j+1]
+                diff2 = self.upper_panel.value_display.diff_labels[j+1]
+
+
+
+            if j >= len(references):
+                header.grid_remove()
+                if j>len(references):
+                    try:
+                        val.grid_remove()
+                        diff.grid_remove()
+
+                        val2.grid_remove()
+                        diff2.grid_remove()
+                    except:
+                        pass
+                continue
+            else:
+                header.grid()
+
+                try:
+                    val.grid()
+                    diff.grid()
+
+                    val2.grid()
+                    diff2.grid()
+                except:
+                    pass
             print(references)
             print(mode)
             print(len(self.upper_panel.value_display.headers))
             ref = references[j]
+            r1 = abs(references[j])
+            if j >= len(references)-1:
+                r2 = "13412412341234132"
+            else:
+                r2 = abs(references[j+1])
             text_prefix = "Measured at"
 
-            try:
-                neg_index = references.index(-ref)
-            except ValueError:
-                neg_index = None
-
-            is_pair = (
-                    neg_index is not None and
-                    neg_index != j and
-                    neg_index not in used_indices and
-                    ref > 0
-            )
+            is_pair = True if r1==r2 else False
 
             if is_pair:
                 value_text = f"{text_prefix} ±{abs(ref)}"
-                used_indices.update({i, neg_index})
             else:
                 value_text = f"{text_prefix} {ref}"
-
-            unit = "V" if mode in ["DCV", "ACV"] else "A"
+            unit = units[j]
             header.configure(text=f"{value_text} {unit}")
-            j+=1
+            j = j+2 if is_pair else j+1
     def clear_values(self):
         """Clear all displayed measurement and difference values."""
         for val_label in self.upper_panel.value_display.value_labels:
