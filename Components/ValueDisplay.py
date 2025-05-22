@@ -38,7 +38,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         self.labels_per_task = {
             task: {
                 "references": [0, 0.1, -0.1, 1, -1, 10, -10, 100, -100, 1000, -1000],
-                "units": ["mV"] * 11,
+                "units": [""] * 11,
                 "measurements": ["--"] * 11,
                 "diffMeas": ["--"] * 11
             }

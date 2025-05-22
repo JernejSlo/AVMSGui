@@ -120,13 +120,16 @@ class App(customtkinter.CTk,CalibrationUtils):
 
     def update_display_label(self, mode):
         used_indices = set()
-
+        j = 0
         for i, header in enumerate(self.upper_panel.value_display.headers):
-            if i in used_indices:
-                continue
-
-            references = self.upper_panel.value_display.labels_values["references"]
-            ref = references[i]
+            if j in used_indices:
+                j+=1
+            print(j)
+            references = self.measParameters["references"]
+            print(references)
+            print(mode)
+            print(len(self.upper_panel.value_display.headers))
+            ref = references[j]
             text_prefix = "Measured at"
 
             try:
@@ -136,7 +139,7 @@ class App(customtkinter.CTk,CalibrationUtils):
 
             is_pair = (
                     neg_index is not None and
-                    neg_index != i and
+                    neg_index != j and
                     neg_index not in used_indices and
                     ref > 0
             )
@@ -149,7 +152,7 @@ class App(customtkinter.CTk,CalibrationUtils):
 
             unit = "V" if mode in ["DCV", "ACV"] else "A"
             header.configure(text=f"{value_text} {unit}")
-
+            j+=1
     def clear_values(self):
         """Clear all displayed measurement and difference values."""
         for val_label in self.upper_panel.value_display.value_labels:

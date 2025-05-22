@@ -102,6 +102,7 @@ class CalibrationUtils():
         self.measProcess()
 
     def changeMeasParam(self,typeOfMeas: str):
+
         match typeOfMeas:
             case 'DCV':
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
@@ -135,7 +136,7 @@ class CalibrationUtils():
                 self.measParameters["dirType"] = "AC"
                 pass
 
-            case 'OHM':
+            case '2Ω':
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
                 self.measParameters["range"] = [100, 1, 10, 100, 1, 10, 100] # PROBLEM MOGOČ
                 self.measParameters["units"] = ["Ω", "kΩ", "kΩ", "kΩ", "MΩ", "MΩ", "MΩ"]
@@ -143,7 +144,7 @@ class CalibrationUtils():
                 self.measParameters["dirType"] = ""
                 pass
 
-            case 'FRE':
+            case 'FREQ.':
                 self.measParameters["references"] = [3, 30, 300, 3, 30, 300]
                 self.measParameters["range"] = ""   # The Agilent 34401A automatically selects an appropriate range based on the frequency of the signal it is measuring.
                 self.measParameters["units"] = ["Hz", "Hz", "Hz", "kHz", "kHz", "kHz"]
@@ -153,6 +154,8 @@ class CalibrationUtils():
 
             case _: # default
                 pass
+
+        print(self.measParameters)
 
         measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
