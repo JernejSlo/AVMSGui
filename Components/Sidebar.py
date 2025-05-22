@@ -10,7 +10,6 @@ class Sidebar(customtkinter.CTkFrame):
         self.active_color = COLORS["backgroundDark"]
         self.hover_color = COLORS["hover"]
         self.text_color = COLORS["lg_text"]
-
         super().__init__(parent, width=140, corner_radius=0, fg_color=self.default_color, bg_color=self.default_color)
         self.grid(row=0, column=0, rowspan=3, sticky="nsew")
 
