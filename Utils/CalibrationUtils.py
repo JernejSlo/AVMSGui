@@ -64,7 +64,6 @@ class CalibrationUtils():
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values)
 
-
         self.terminal.log(f'{measurement}')
 
     def waitForSettled(self):
@@ -100,7 +99,6 @@ class CalibrationUtils():
         self.F5522A.timeout = 2500
         rangeVDC = [0.1, 1, 10, 100, 1000]
 
-        self.changeMeasParam(self.selected_mode)
         self.measProcess()
 
     def changeMeasParam(self,typeOfMeas: str):

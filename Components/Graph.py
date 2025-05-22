@@ -11,8 +11,6 @@ class GraphComponent(customtkinter.CTkFrame):
     """ Real-time updating graph component (Uses CustomTkinter default background) """
 
     def __init__(self, parent):
-
-
         self.default_color = COLORS["backgroundLight"]
         self.active_color = COLORS["backgroundDark"]
         self.hover_color = COLORS["hover"]
@@ -20,30 +18,17 @@ class GraphComponent(customtkinter.CTkFrame):
 
         super().__init__(parent, fg_color=self.default_color)
 
-        self.grid(row=1, column=1, padx=(20, 20), pady=(10, 10), sticky="nsew")
-        self.grid_columnconfigure(1, weight=1)
+        # Make sure GraphComponent itself fills its container
+        self.grid(row=0, column=0, padx=(20, 20), pady=(10, 10), sticky="nsew")
         self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         self.default_bg_color = self.default_color
         plt.style.use("dark_background")
 
-        # === Left Side: Value Display ===
-        self.value_frame = customtkinter.CTkFrame(self, fg_color=self.default_color)
-        self.value_frame.grid(row=0, column=0, padx=(10, 10), pady=10, sticky="n")
-
-        self.value_labels = ["Voltage", "Current", "Resistance"]
-        self.value_data_labels = []
-
-        for i, label in enumerate(self.value_labels):
-            customtkinter.CTkLabel(self.value_frame, text=label, font=customtkinter.CTkFont(size=16)).grid(
-                row=i, column=0, padx=10, pady=5, sticky="w")
-            value_label = customtkinter.CTkLabel(self.value_frame, text="--", font=customtkinter.CTkFont(size=16))
-            value_label.grid(row=i, column=1, padx=10, pady=5, sticky="w")
-            self.value_data_labels.append(value_label)
-
-        # === Right Side: Graph Frame ===
+        # === Graph Frame ===
         self.graph_frame = customtkinter.CTkFrame(self, fg_color=self.default_color)
-        self.graph_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.graph_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.graph_frame.grid_rowconfigure(0, weight=1)
         self.graph_frame.grid_rowconfigure(1, weight=0)
         self.graph_frame.grid_columnconfigure(0, weight=1)
@@ -62,37 +47,40 @@ class GraphComponent(customtkinter.CTkFrame):
         self.canvas.get_tk_widget().bind("<Button-5>", self.on_scroll_zoom)  # Linux scroll down
 
         # === Controls Below the Graph ===
-        # === Controls Below the Graph ===
         self.bottom_control_frame = customtkinter.CTkFrame(self.graph_frame, fg_color=self.default_color)
         self.bottom_control_frame.grid(row=1, column=0, pady=(5, 0))
 
         shared_btn_width = 40
         shared_btn_height = 26
 
-        self.left_button = customtkinter.CTkButton(self.bottom_control_frame, text="◀", width=shared_btn_width,
-                                                   height=shared_btn_height, command=self.switch_left)
+        self.left_button = customtkinter.CTkButton(
+            self.bottom_control_frame, text="◀", width=shared_btn_width,
+            height=shared_btn_height, command=self.switch_left)
         self.left_button.grid(row=0, column=0, padx=5)
 
-        self.display_label = customtkinter.CTkLabel(self.bottom_control_frame, text="Voltage",
-                                                    font=customtkinter.CTkFont(size=14))
+        self.display_label = customtkinter.CTkLabel(
+            self.bottom_control_frame, text="Voltage", font=customtkinter.CTkFont(size=14))
         self.display_label.grid(row=0, column=1, padx=5)
 
-        self.right_button = customtkinter.CTkButton(self.bottom_control_frame, text="▶", width=shared_btn_width,
-                                                    height=shared_btn_height, command=self.switch_right)
+        self.right_button = customtkinter.CTkButton(
+            self.bottom_control_frame, text="▶", width=shared_btn_width,
+            height=shared_btn_height, command=self.switch_right)
         self.right_button.grid(row=0, column=2, padx=5)
 
         customtkinter.CTkLabel(self.bottom_control_frame, text=" ").grid(row=0, column=3, padx=10)
 
-        self.zoom_in_button = customtkinter.CTkButton(self.bottom_control_frame, text="🔍-", width=shared_btn_width,
-                                                      height=shared_btn_height, command=self.zoom_in)
+        self.zoom_in_button = customtkinter.CTkButton(
+            self.bottom_control_frame, text="🔍-", width=shared_btn_width,
+            height=shared_btn_height, command=self.zoom_in)
         self.zoom_in_button.grid(row=0, column=4, padx=2)
 
-        self.zoom_label = customtkinter.CTkLabel(self.bottom_control_frame, text="Last 50 pts",
-                                                 font=customtkinter.CTkFont(size=14))
+        self.zoom_label = customtkinter.CTkLabel(
+            self.bottom_control_frame, text="Last 50 pts", font=customtkinter.CTkFont(size=14))
         self.zoom_label.grid(row=0, column=5, padx=5)
 
-        self.zoom_out_button = customtkinter.CTkButton(self.bottom_control_frame, text="🔍+", width=shared_btn_width,
-                                                       height=shared_btn_height, command=self.zoom_out)
+        self.zoom_out_button = customtkinter.CTkButton(
+            self.bottom_control_frame, text="🔍+", width=shared_btn_width,
+            height=shared_btn_height, command=self.zoom_out)
         self.zoom_out_button.grid(row=0, column=6, padx=2)
 
         # === Data & Graph Animation ===
@@ -102,7 +90,9 @@ class GraphComponent(customtkinter.CTkFrame):
         self.resistance_values = []
 
         self.selected_index = 0
+        self.value_labels = ["Voltage", "Current", "Resistance"]
         self.labels = self.value_labels
+        self.value_data_labels = []
         self.data_sets = [self.voltage_values, self.current_values, self.resistance_values]
 
         self.max_point_options = [10, 25, 50, 100, 200, None]
