@@ -177,6 +177,7 @@ class CalibrationUtils():
         self.measType = self.measParameters['measType']
         self.dirType = self.measParameters['dirType']
         # prvi del kalibracije
+
         for MeasNum in range(len(self.measParameters["references"])):
             # konfiguracija meritve na multimetru HP34401A
 
@@ -185,8 +186,13 @@ class CalibrationUtils():
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
 
-            # konfiguracija referenčne vrednosti na kalibratorju F5522A
 
+            if self.measType == 'FREQuency' and MeasNum == 1:
+                F5522A_string = "OUT 1 V"
+                self.terminal.log(f'IN F5522A: {F5522A_string}')
+                self.F5522A.write(F5522A_string)
+
+            # konfiguracija referenčne vrednosti na kalibratorju F5522A
             F5522A_string = f"{'OUT'} {self.measParameters['references'][MeasNum]} {self.measParameters['units'][MeasNum]}"
             self.terminal.log(f'IN F5522A: {F5522A_string}')
 
