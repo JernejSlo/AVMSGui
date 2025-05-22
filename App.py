@@ -23,14 +23,13 @@ from Components.BottomTabBar import BottomTabBar
 from Utils.CalibrationUtils import CalibrationUtils
 from Utils.color_theme import COLORS
 
-customtkinter.set_appearance_mode("System")
+customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
 class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
 
         self.skip_fake_version = True
-        customtkinter.set_appearance_mode("System")
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
