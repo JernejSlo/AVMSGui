@@ -97,7 +97,6 @@ class CalibrationUtils():
         self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
-        rangeVDC = [0.1, 1, 10, 100, 1000]
 
         self.measProcess()
 
