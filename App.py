@@ -30,7 +30,7 @@ class App(customtkinter.CTk,CalibrationUtils):
     def __init__(self):
 
         self.skip_fake_version = True
-
+        customtkinter.set_appearance_mode("Light")
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
