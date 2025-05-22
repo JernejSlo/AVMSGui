@@ -145,7 +145,7 @@ class CalibrationUtils():
 
             case 'FREQ.':
                 self.measParameters["references"] = [3, 30, 300, 3, 30, 300]
-                self.measParameters["range"] = ""   # The Agilent 34401A automatically selects an appropriate range based on the frequency of the signal it is measuring.
+                self.measParameters["range"] = [""] * len(self.measParameters["references"])
                 self.measParameters["units"] = ["Hz", "Hz", "Hz", "kHz", "kHz", "kHz"]
                 self.measParameters["measType"] = "FREQuency"
                 self.measParameters["dirType"] = ""
