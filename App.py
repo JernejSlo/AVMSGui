@@ -125,14 +125,17 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         for pair_index in range(total_pairs):
             if j >= len(self.measParameters["references"]):
-                # Out of data — hide both single & double layouts
+                # Out of data — hide both single & double layouts completely
                 self.upper_panel.value_display.single_value_labels[pair_index].grid_remove()
                 self.upper_panel.value_display.single_diff_labels[pair_index].grid_remove()
+                self.upper_panel.value_display.single_std_labels[pair_index].grid_remove()
 
                 self.upper_panel.value_display.value_labels[pair_index * 2].grid_remove()
                 self.upper_panel.value_display.value_labels[pair_index * 2 + 1].grid_remove()
                 self.upper_panel.value_display.diff_labels[pair_index * 2].grid_remove()
                 self.upper_panel.value_display.diff_labels[pair_index * 2 + 1].grid_remove()
+                self.upper_panel.value_display.std_labels[pair_index * 2].grid_remove()
+                self.upper_panel.value_display.std_labels[pair_index * 2 + 1].grid_remove()
 
                 self.upper_panel.value_display.headers[pair_index].grid_remove()
                 continue
@@ -159,15 +162,24 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
                 j += 1
 
     def clear_values(self):
-        """Clear all displayed measurement and difference values."""
+        """Clear all displayed measurement, difference, and standard deviation values."""
         for val_label in self.upper_panel.value_display.value_labels:
             val_label.configure(text="--")
-
         for diff_label in self.upper_panel.value_display.diff_labels:
             diff_label.configure(text="Δ --")
+        for std_label in self.upper_panel.value_display.std_labels:
+            std_label.configure(text="σ --")
+
+        for single_val_label in self.upper_panel.value_display.single_value_labels:
+            single_val_label.configure(text="--")
+        for single_diff_label in self.upper_panel.value_display.single_diff_labels:
+            single_diff_label.configure(text="Δ --")
+        for single_std_label in self.upper_panel.value_display.single_std_labels:
+            single_std_label.configure(text="σ --")
 
         self.vals = []
         self.diffs = []
+
     def show_terminal(self):
         self.graph.pack_forget()
         self.terminal.pack(fill="both", expand=True)
@@ -227,6 +239,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
             self.show_terminal()
 
         self.update_display_label(mode)
+        self.clear_values()
 
     def start_action(self):
         """ Start generating random values """
@@ -247,8 +260,8 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.running = False
         self.terminal.log("Stopped.")
         self.database_overview.populate_dropdown()
-        self.upper_panel.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
-        self.upper_panel.controls.start_button.configure(state="enabled",fg_color="steel blue")
+        self.upper_panel.controls.stop_button.configure(state="disabled", fg_color="#B0B0B0")
+        self.upper_panel.controls.start_button.configure(state="enabled", fg_color="steel blue")
 
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)

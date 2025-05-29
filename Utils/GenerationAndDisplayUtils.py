@@ -1,4 +1,5 @@
 import random
+import time
 import traceback
 from colorama import Fore, Style
 
@@ -9,87 +10,58 @@ class GenerationAndDisplayUtils():
         pass
 
     def generate_values_no_machine(self):
-        """Generate all values in one step, update display and log for simulated mode"""
-        references = self.upper_panel.value_display.labels_values["references"]
-        units = self.upper_panel.value_display.labels_values["units"]
+        """Generate values one by one with display updating gradually."""
 
+        if not self.running:
+            return
+
+        total_values = len(self.upper_panel.value_display.value_labels)
         current_values = []
         difference_values = []
 
-        j = 0
-        pair_index = 0
-        total_pairs = len(self.upper_panel.value_display.pair_indices)
+        for index in range(total_values):
+            if self.interrupt("Generation interrupted."): return
 
-        while j < len(references) and pair_index < total_pairs:
+
             try:
-                ref = references[j]
-                unit = units[j]
+                unit = self.upper_panel.value_display.labels_values["units"][index]
+                reference = self.upper_panel.value_display.labels_values["references"][index]
             except IndexError:
-                ref = 0
                 unit = "mV"
+                reference = 0
 
-            # Adjust unit based on mode
             if self.sidebar.selected_mode in ("DCV", "ACV"):
                 unit = unit[:-1] + "V"
             elif self.sidebar.selected_mode in ("DCI", "ACI"):
                 unit = unit[:-1] + "A"
 
-            r1 = abs(ref)
-            r2 = abs(references[j + 1]) if j + 1 < len(references) else None
-            is_pair = r1 == r2 and r1 != 0
+            new_value = round(random.uniform(0, 1000000000), 2) / 1000000
+            difference = round(random.uniform(-1000, 1000), 2) / 1000
 
-            if is_pair:
-                # Generate 2 values (positive + negative)
-                for _ in range(2):
-                    new_value = round(random.uniform(0, 1000000000), 2) / 1000000
-                    difference = round(random.uniform(-1000, 1000), 2) / 1000
+            current_values.append({"Value": new_value, "Label": unit})
+            difference_values.append({"Value": difference, "Label": unit})
 
-                    current_values.append({"Value": new_value, "Label": unit})
-                    difference_values.append({"Value": difference, "Label": unit})
+            self.upper_panel.value_display.labels_values["diffMeas"][index] = difference
 
-                    self.upper_panel.value_display.labels_values["diffMeas"][j] = difference
+            self.terminal.log(
+                f"Index {index} - Simulated {self.sidebar.selected_mode}: {new_value} {unit}, Δ = {difference} {unit} "
+                f"(ref: {reference} {unit})"
+            )
 
-                    self.terminal.log(
-                        f"Index {j} - Simulated {self.sidebar.selected_mode}: {new_value} {unit}, Δ = {difference} {unit} (ref: {references[j]} {unit})"
-                    )
+            self.log_measurement(
+                calibration_id=self.current_calibration_id,
+                set_value=reference,
+                calculated_value=new_value,
+                ref_set_diff=difference,
+                std=random.uniform(0.1, 0.5)
+            )
 
-                    self.log_measurement(
-                        calibration_id=self.current_calibration_id,
-                        set_value=references[j],
-                        calculated_value=new_value,
-                        ref_set_diff=difference,
-                        std=random.uniform(0.1, 0.5)
-                    )
+            # Gradually update each value
+            self.upper_panel.value_display.update_values(current_values, difference_values)
 
-                    j += 1
-            else:
-                # Generate 1 value (single)
-                new_value = round(random.uniform(0, 1000000000), 2) / 1000000
-                difference = round(random.uniform(-1000, 1000), 2) / 1000
+            time.sleep(0.1)  # Small delay for gradual update
 
-                current_values.append({"Value": new_value, "Label": unit})
-                difference_values.append({"Value": difference, "Label": unit})
-
-                self.upper_panel.value_display.labels_values["diffMeas"][j] = difference
-
-                self.terminal.log(
-                    f"Index {j} - Simulated {self.sidebar.selected_mode}: {new_value} {unit}, Δ = {difference} {unit} (ref: {ref} {unit})"
-                )
-
-                self.log_measurement(
-                    calibration_id=self.current_calibration_id,
-                    set_value=ref,
-                    calculated_value=new_value,
-                    ref_set_diff=difference,
-                    std=random.uniform(0.1, 0.5)
-                )
-
-                j += 1
-
-            pair_index += 1
-
-        # Update the UI
-        self.upper_panel.value_display.update_values(current_values, difference_values)
+        if self.interrupt("Generation interrupted."): return
 
         if self.graph_enabled:
             graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
@@ -97,12 +69,14 @@ class GenerationAndDisplayUtils():
                             {"Value": random.uniform(0, 1000), "Label": "Ω"}]
             self.graph.update_data(graph_values)
 
-        # Show pause if in 2Ω mode
         if self.selected_mode == "2Ω" and not self.prompt_shown:
             self.prompt_shown = True
             self.running = False
             self.after(100, self.show_pause_popup)
-
+    def interrupt(self,message):
+        if not self.running:
+            self.terminal.log(message)
+            return True
     def get_calibration_values(self):
         """Run calibration once, log and update values. Falls back to fake values on error."""
         try:

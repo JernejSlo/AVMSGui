@@ -33,17 +33,20 @@ class ValueDisplay(customtkinter.CTkFrame):
                 "references": [0, 0.1, -0.1, 1, -1, 10, -10, 100, -100, 1000, -1000],
                 "units": [""] * 11,
                 "measurements": ["--"] * 11,
-                "diffMeas": ["--"] * 11
+                "diffMeas": ["--"] * 11,
+                "stdDevs": ["--"] * 11
             }
             for task in ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ.", "PERIOD"]
         }
 
         self.labels_values = self.labels_per_task["DCV"]
         self.headers = []
-        self.value_labels = []         # for double
-        self.diff_labels = []          # for double
+        self.value_labels = []
+        self.diff_labels = []
+        self.std_labels = []  # for double
         self.single_value_labels = []  # for single
-        self.single_diff_labels = []   # for single
+        self.single_diff_labels = []  # for single
+        self.single_std_labels = []  # for single
         self.pair_indices = []
 
         references = self.labels_values["references"]
@@ -66,16 +69,16 @@ class ValueDisplay(customtkinter.CTkFrame):
 
             self.pair_indices.append((i, neg_index))
 
-            # Header
+            # === Header ===
             header = customtkinter.CTkLabel(
                 self, text=f"Measured at ±{abs(ref)}{units[i]}",
                 font=customtkinter.CTkFont(size=15, weight="bold"),
                 width=header_width
             )
-            header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
+            header.grid(row=row_block * 4, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
             self.headers.append(header)
 
-            # === Double layout ===
+            # === Double layout: Positive ===
             label_pos = customtkinter.CTkLabel(
                 self, text=f"{measurements[i]} {units[i]}",
                 font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
@@ -86,12 +89,21 @@ class ValueDisplay(customtkinter.CTkFrame):
                 font=customtkinter.CTkFont(size=14),
                 width=label_width
             )
-            label_pos.grid(row=row_block * 3 + 1, column=column, padx=padx, pady=(4, 2), sticky="n")
-            diff_pos.grid(row=row_block * 3 + 2, column=column, padx=padx, pady=(0, 8), sticky="n")
+            std_pos = customtkinter.CTkLabel(
+                self, text=f"σ -- {units[i]}",
+                font=customtkinter.CTkFont(size=12),
+                width=label_width
+            )
+
+            label_pos.grid(row=row_block * 4 + 1, column=column, padx=padx, pady=(4, 2), sticky="n")
+            diff_pos.grid(row=row_block * 4 + 2, column=column, padx=padx, pady=(0, 2), sticky="n")
+            std_pos.grid(row=row_block * 4 + 3, column=column, padx=padx, pady=(0, 6), sticky="n")
 
             self.value_labels.append(label_pos)
             self.diff_labels.append(diff_pos)
+            self.std_labels.append(std_pos)
 
+            # === Double layout: Negative ===
             if neg_index is not None:
                 label_neg = customtkinter.CTkLabel(
                     self, text=f"{measurements[neg_index]} {units[neg_index]}",
@@ -101,6 +113,11 @@ class ValueDisplay(customtkinter.CTkFrame):
                 diff_neg = customtkinter.CTkLabel(
                     self, text=f"Δ {differences[neg_index]} {units[neg_index]}",
                     font=customtkinter.CTkFont(size=14),
+                    width=label_width
+                )
+                std_neg = customtkinter.CTkLabel(
+                    self, text=f"σ -- {units[neg_index]}",
+                    font=customtkinter.CTkFont(size=12),
                     width=label_width
                 )
             else:
@@ -114,12 +131,19 @@ class ValueDisplay(customtkinter.CTkFrame):
                     font=customtkinter.CTkFont(size=14),
                     width=label_width
                 )
+                std_neg = customtkinter.CTkLabel(
+                    self, text="σ --",
+                    font=customtkinter.CTkFont(size=12),
+                    width=label_width
+                )
 
-            label_neg.grid(row=row_block * 3 + 1, column=column + 1, padx=padx, pady=(4, 2), sticky="n")
-            diff_neg.grid(row=row_block * 3 + 2, column=column + 1, padx=padx, pady=(0, 8), sticky="n")
+            label_neg.grid(row=row_block * 4 + 1, column=column + 1, padx=padx, pady=(4, 2), sticky="n")
+            diff_neg.grid(row=row_block * 4 + 2, column=column + 1, padx=padx, pady=(0, 2), sticky="n")
+            std_neg.grid(row=row_block * 4 + 3, column=column + 1, padx=padx, pady=(0, 6), sticky="n")
 
             self.value_labels.append(label_neg)
             self.diff_labels.append(diff_neg)
+            self.std_labels.append(std_neg)
 
             # === Single layout ===
             label_single = customtkinter.CTkLabel(
@@ -132,13 +156,23 @@ class ValueDisplay(customtkinter.CTkFrame):
                 font=customtkinter.CTkFont(size=14),
                 width=label_width * 2
             )
-            label_single.grid(row=row_block * 3 + 1, column=column, columnspan=2, padx=padx, pady=(4, 2), sticky="n")
-            diff_single.grid(row=row_block * 3 + 2, column=column, columnspan=2, padx=padx, pady=(0, 8), sticky="n")
+            std_single = customtkinter.CTkLabel(
+                self, text=f"σ -- {units[i]}",
+                font=customtkinter.CTkFont(size=12),
+                width=label_width * 2
+            )
+
+            label_single.grid(row=row_block * 4 + 1, column=column, columnspan=2, padx=padx, pady=(4, 2), sticky="n")
+            diff_single.grid(row=row_block * 4 + 2, column=column, columnspan=2, padx=padx, pady=(0, 2), sticky="n")
+            std_single.grid(row=row_block * 4 + 3, column=column, columnspan=2, padx=padx, pady=(0, 6), sticky="n")
+
             label_single.grid_remove()
             diff_single.grid_remove()
+            std_single.grid_remove()
 
             self.single_value_labels.append(label_single)
             self.single_diff_labels.append(diff_single)
+            self.single_std_labels.append(std_single)
 
             used_indices.add(i)
             if neg_index is not None:
@@ -154,7 +188,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         # Rounding slider
         self.rounding_precision = customtkinter.IntVar(value=2)
         slider_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        slider_frame.grid(row=row_block * 3 + 1, column=0, columnspan=total_columns, pady=(10, 0), sticky="ew")
+        slider_frame.grid(row=row_block * 4 + 1, column=0, columnspan=total_columns, pady=(10, 0), sticky="ew")
         slider_frame.grid_columnconfigure(0, weight=1)
         slider_frame.grid_columnconfigure(1, weight=0)
         slider_frame.grid_columnconfigure(2, weight=1)
@@ -182,24 +216,38 @@ class ValueDisplay(customtkinter.CTkFrame):
     def switch_to_single(self, pair_index, mode=None):
         self.single_mode_flags[pair_index] = True
 
+        # Hide double layout widgets
         self.value_labels[pair_index * 2].grid_remove()
         self.value_labels[pair_index * 2 + 1].grid_remove()
+
         self.diff_labels[pair_index * 2].grid_remove()
         self.diff_labels[pair_index * 2 + 1].grid_remove()
 
+        self.std_labels[pair_index * 2].grid_remove()
+        self.std_labels[pair_index * 2 + 1].grid_remove()
+
+        # Show single layout widgets
         self.single_value_labels[pair_index].grid()
         self.single_diff_labels[pair_index].grid()
+        self.single_std_labels[pair_index].grid()
 
     def switch_to_double(self, pair_index):
         self.single_mode_flags[pair_index] = False
 
+        # Hide single layout widgets
         self.single_value_labels[pair_index].grid_remove()
         self.single_diff_labels[pair_index].grid_remove()
+        self.single_std_labels[pair_index].grid_remove()
 
+        # Show double layout widgets
         self.value_labels[pair_index * 2].grid()
         self.value_labels[pair_index * 2 + 1].grid()
+
         self.diff_labels[pair_index * 2].grid()
         self.diff_labels[pair_index * 2 + 1].grid()
+
+        self.std_labels[pair_index * 2].grid()
+        self.std_labels[pair_index * 2 + 1].grid()
 
     def get_column_for_index(self, pair_index, single_mode_flags):
         col = 0
@@ -212,30 +260,59 @@ class ValueDisplay(customtkinter.CTkFrame):
         self.diffs = differences
         precision = self.rounding_precision.get()
 
-        for i, val in enumerate(values):
+        value_i = 0  # index into values[] and differences[]
+        for pair_index, is_single in enumerate(self.single_mode_flags):
             try:
-                raw_val = val["Value"]
-                label = val["Label"]
-                diff_val = differences[i]["Value"]
+                if is_single:
+                    val = values[value_i]
+                    diff_val = differences[value_i]
 
-                if isinstance(raw_val, str):
-                    value_str = raw_val
+                    raw_val = val["Value"]
+                    label = val["Label"]
+                    diff = diff_val["Value"]
+                    std = val.get("StdDev", "--")
+
+                    value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
+                    diff_str = diff if isinstance(diff, str) else f"{float(diff):.2f}"
+                    std_str = std if isinstance(std, str) else f"{float(std):.2f}"
+
+                    self.single_value_labels[pair_index].configure(text=f"{value_str} {label}")
+                    self.single_diff_labels[pair_index].configure(text=f"Δ {diff_str} {label}")
+                    self.single_std_labels[pair_index].configure(text=f"σ {std_str} {label}")
+
+                    value_i += 1
+
                 else:
-                    value_str = f"{float(raw_val):.{precision}f}"
+                    for offset in range(2):
+                        val = values[value_i]
+                        diff_val = differences[value_i]
 
-                if isinstance(diff_val, str):
-                    diff_str = diff_val
-                else:
-                    diff_str = f"{float(diff_val):.2f}"
+                        raw_val = val["Value"]
+                        label = val["Label"]
+                        diff = diff_val["Value"]
+                        std = val.get("StdDev", "--")
 
-                self.value_labels[i].configure(text=f"{value_str} {label}")
-                self.diff_labels[i].configure(text=f"Δ {diff_str} {label}")
-                self.single_value_labels[i // 2].configure(text=f"{value_str} {label}")
-                self.single_diff_labels[i // 2].configure(text=f"Δ {diff_str} {label}")
+                        value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
+                        diff_str = diff if isinstance(diff, str) else f"{float(diff):.2f}"
+                        std_str = std if isinstance(std, str) else f"{float(std):.2f}"
+
+                        label_index = pair_index * 2 + offset
+                        self.value_labels[label_index].configure(text=f"{value_str} {label}")
+                        self.diff_labels[label_index].configure(text=f"Δ {diff_str} {label}")
+                        self.std_labels[label_index].configure(text=f"σ {std_str} {label}")
+
+                        value_i += 1
 
             except (IndexError, KeyError, TypeError, ValueError):
-                self.value_labels[i].configure(text="--")
-                self.diff_labels[i].configure(text="Δ --")
-                if i // 2 < len(self.single_value_labels):
-                    self.single_value_labels[i // 2].configure(text="--")
-                    self.single_diff_labels[i // 2].configure(text="Δ --")
+                if is_single:
+                    self.single_value_labels[pair_index].configure(text="--")
+                    self.single_diff_labels[pair_index].configure(text="Δ --")
+                    self.single_std_labels[pair_index].configure(text="σ --")
+                else:
+                    for offset in range(2):
+                        label_index = pair_index * 2 + offset
+                        if label_index < len(self.value_labels):
+                            self.value_labels[label_index].configure(text="--")
+                            self.diff_labels[label_index].configure(text="Δ --")
+                            self.std_labels[label_index].configure(text="σ --")
+
