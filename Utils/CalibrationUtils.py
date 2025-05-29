@@ -28,7 +28,7 @@ class CalibrationUtils():
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "measurements": [None, None, None, None, None, None, None, None, None, None, None],
-            #"frequencies": ["10 Hz", "None", None, None, None, None, None, None, None, None],
+            #"frequencies": ["10 Hz", "1 kHz", 100 kHz, None, None, None, None, None, None, None],
             "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
             "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -77,7 +77,7 @@ class CalibrationUtils():
 
         # ponovitev meritev tolikokrat kot je vrednost numOfMeas
         for SameMeasNum in range(numOfMeas):
-            HP34401A_string = f"MEASure:{self.measType}:{self.dirType}? {str(measRange)}"
+            HP34401A_string = f"MEASure:{self.measType}{self.dirType}? {str(measRange)}"
             self.terminal.log(HP34401A_string)
             Meas = float(self.HP34401A.query(HP34401A_string))
             self.terminal.log(str(Meas))
@@ -97,7 +97,6 @@ class CalibrationUtils():
         self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
-        rangeVDC = [0.1, 1, 10, 100, 1000]
 
         self.measProcess()
 
@@ -109,7 +108,7 @@ class CalibrationUtils():
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
                 self.measParameters["measType"] = "VOLTage"
-                self.measParameters["dirType"] = "DC"
+                self.measParameters["dirType"] = ":DC"
                 pass
 
             case 'ACV':
@@ -117,7 +116,7 @@ class CalibrationUtils():
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 750, 750]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
                 self.measParameters["measType"] = "VOLTage"
-                self.measParameters["dirType"] = "AC"
+                self.measParameters["dirType"] = ":AC"
                 pass
 
             case 'DCI':
@@ -125,7 +124,7 @@ class CalibrationUtils():
                 self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
                 self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
                 self.measParameters["measType"] = "CURRent"
-                self.measParameters["dirType"] = "DC"
+                self.measParameters["dirType"] = ":DC"
                 pass
 
             case 'ACI':
@@ -133,20 +132,20 @@ class CalibrationUtils():
                 self.measParameters["range"] = [1, 1, 1, 3, 3]
                 self.measParameters["units"] = ["A", "A", "A", "A", "A"]
                 self.measParameters["measType"] = "CURRent"
-                self.measParameters["dirType"] = "AC"
+                self.measParameters["dirType"] = ":AC"
                 pass
 
             case '2Ω':
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
                 self.measParameters["range"] = [100, 1, 10, 100, 1, 10, 100] # PROBLEM MOGOČ
-                self.measParameters["units"] = ["Ω", "kΩ", "kΩ", "kΩ", "MΩ", "MΩ", "MΩ"]
+                self.measParameters["units"] = ["ohm", "k ohm", "k ohm", "k ohm", "M ohm", "M ohm", "M ohm"]
                 self.measParameters["measType"] = "FRESistance" # RESistance od vključno 100 kΩ naprej
                 self.measParameters["dirType"] = ""
                 pass
 
             case 'FREQ.':
                 self.measParameters["references"] = [3, 30, 300, 3, 30, 300]
-                self.measParameters["range"] = ""   # The Agilent 34401A automatically selects an appropriate range based on the frequency of the signal it is measuring.
+                self.measParameters["range"] = [""] * len(self.measParameters["references"])
                 self.measParameters["units"] = ["Hz", "Hz", "Hz", "kHz", "kHz", "kHz"]
                 self.measParameters["measType"] = "FREQuency"
                 self.measParameters["dirType"] = ""
@@ -180,12 +179,26 @@ class CalibrationUtils():
         self.measType = self.measParameters['measType']
         self.dirType = self.measParameters['dirType']
         # prvi del kalibracije
+
         for MeasNum in range(len(self.measParameters["references"])):
             # konfiguracija meritve na multimetru HP34401A
 
             HP34401A_string = f"{'CONFigure:'}{self.measType}{':'}{self.dirType} {self.measParameters['range'][MeasNum]}"
+            print(HP34401A_string)
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
+
+            # postavitev frekvence na nič pri meritvah DC veličin
+            if self.dirType != ":AC" and self.measType != 'FREQuency' and MeasNum == 0:
+                F5522A_string = "OUT 0 Hz"
+                self.terminal.log(f'IN F5522A: {F5522A_string}')
+                self.F5522A.write(F5522A_string)
+
+            # postavitev referenčne napetosti na 1 V pri meritvah frekvence
+            if self.measType == 'FREQuency' and MeasNum == 0:
+                F5522A_string = "OUT 1 V"
+                self.terminal.log(f'IN F5522A: {F5522A_string}')
+                self.F5522A.write(F5522A_string)
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
             F5522A_string = f"{'OUT'} {self.measParameters['references'][MeasNum]} {self.measParameters['units'][MeasNum]}"
@@ -215,7 +228,7 @@ class CalibrationUtils():
             self.terminal.log(F5522A_string)
             self.F5522A.write(F5522A_string)
 
-        if self.measType == "Voltage":
+        if self.measType == "VOLTage":
             # konfiguracija meritve na multimetru HP34401A
             HP34401A_string = f"CONFigure:{self.measType}:{self.dirType} 10"
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
