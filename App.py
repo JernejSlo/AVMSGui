@@ -30,7 +30,7 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def __init__(self):
 
-        self.skip_fake_version = True
+        self.skip_fake_version = False
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
@@ -220,30 +220,32 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.database_overview.grid()
 
     def update_title(self, mode):
-        self.show_all_pages()
-        """ Update title and show graph if needed """
-        self.terminal.log(f"Mode selected: {mode}")
-        self.selected_mode = mode
+        if not self.running:
+            self.show_all_pages()
+            """ Update title and show graph if needed """
+            self.terminal.log(f"Mode selected: {mode}")
+            self.selected_mode = mode
 
-        self.changeMeasParam(mode)
+            self.changeMeasParam(mode)
 
-        # Show the ValueDisplay when a mode is selected
-        if not self.upper_panel.value_display.winfo_ismapped():
-            self.upper_panel.content_box.grid(row=0, column=0)
+            # Show the ValueDisplay when a mode is selected
+            if not self.upper_panel.value_display.winfo_ismapped():
+                self.upper_panel.content_box.grid(row=0, column=0)
 
-        # Enable graph only for certain modes
-        self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
-        if self.graph_enabled:
-            self.show_graph()
-        else:
-            self.show_terminal()
+            # Enable graph only for certain modes
+            self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
+            if self.graph_enabled:
+                self.show_graph()
+            else:
+                self.show_terminal()
 
-        self.update_display_label(mode)
-        self.clear_values()
+            self.update_display_label(mode)
+            self.clear_values()
 
     def start_action(self):
         """ Start generating random values """
         if not self.running:
+            self.clear_values()
             self.running = True
 
             # Create a new calibration in database

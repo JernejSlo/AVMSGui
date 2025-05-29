@@ -53,7 +53,8 @@ class GenerationAndDisplayUtils():
                 set_value=reference,
                 calculated_value=new_value,
                 ref_set_diff=difference,
-                std=random.uniform(0.1, 0.5)
+                std=random.uniform(0.1, 0.5),
+                frequency=None
             )
 
             # Gradually update each value
