@@ -43,14 +43,18 @@ class CalibrationUtils():
 
     def log_everything(self,idx=0):
 
-        unit = self.measParameters["units"][idx]
         measurement = self.measParameters["measurements"][idx]
+        unit = self.measParameters["units"][idx]
+        diff = self.measParameters["diffMeas"][idx]
+        std = self.measParameters["stdVars"][idx]
+
         if measurement is None:
             measurement = "--"
-        diff = self.measParameters["diffMeas"][idx]
+            unit = ""
+
         if diff is None:
             diff = "--"
-        std = self.measParameters["stdVars"][idx]
+
         if std is None:
             std = "--"
 
@@ -59,10 +63,17 @@ class CalibrationUtils():
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
+        self.std_values[idx] = {"Value": std, "Label": unit}
+
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
+
+        self.current_values[idx] = {"Value": measurement, "Label": unit}
+
+
+
         # Update display
-        self.upper_panel.value_display.update_values(self.current_values, self.difference_values)
+        self.upper_panel.value_display.update_values(self.current_values, self.difference_values[idx], self.std_values)
 
     def waitForSettled(self):
         SETTLED = 12
@@ -264,6 +275,8 @@ class CalibrationUtils():
             F5522A_string = 'STBY'
             self.terminal.log(f'IN F5522A: {F5522A_string}')
             self.F5522A.write(F5522A_string)
+
+            self.terminal.log("")
 
         if self.measType == "VOLTage":
             # konfiguracija meritve na multimetru HP34401A
