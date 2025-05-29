@@ -248,8 +248,10 @@ class CalibrationUtils():
             self.terminal.log(f'IN F5522A: {F5522A_string}')
             self.F5522A.write(F5522A_string)
 
+            if self.interrupt_calib("Generation interrupted."): return
             # čakanje na izravnavo referenčne vrednosti
             self.waitForSettled()
+            if self.interrupt_calib("Generation interrupted."): return
 
             # izračun in zapis meritve
             [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], self.measParameters["range"][MeasNum])
