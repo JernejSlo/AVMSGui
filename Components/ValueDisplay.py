@@ -14,6 +14,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         self.running = running
         self.vals = []
         self.diffs = []
+        self.stds = []
         super().__init__(parent, fg_color=self.default_color)
         self.grid(row=1, column=1, padx=(20, 20), pady=(10, 80), sticky="nsew")
 
@@ -36,7 +37,7 @@ class ValueDisplay(customtkinter.CTkFrame):
                 "diffMeas": ["--"] * 13,
                 "stdDevs": ["--"] * 13
             }
-            for task in ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ.", "PERIOD"]
+            for task in ["DCV", "DCI", "ACV", "ACI", "RES", "FREQ.", "PERIOD"]
         }
 
         self.labels_values = self.labels_per_task["DCV"]
@@ -212,7 +213,7 @@ class ValueDisplay(customtkinter.CTkFrame):
     def update_slider_label(self, value):
         self.precision_value_label.configure(text=f"{int(float(value))} digits")
         if not self.running:
-            self.update_values(self.vals, self.diffs)
+            self.update_values(self.vals, self.diffs, self.stds)
 
     def switch_to_single(self, pair_index, mode=None):
         self.single_mode_flags[pair_index] = True
@@ -259,6 +260,8 @@ class ValueDisplay(customtkinter.CTkFrame):
     def update_values(self, values, differences, stds):
         self.vals = values
         self.diffs = differences
+        self.stds = stds
+        print(stds)
         precision = self.rounding_precision.get()
 
         value_i = 0  # index into values[] and differences[]
@@ -288,15 +291,16 @@ class ValueDisplay(customtkinter.CTkFrame):
                     for offset in range(2):
                         val = values[value_i]
                         diff_val = differences[value_i]
+                        std_val = stds[value_i]
 
                         raw_val = val["Value"]
                         label = val["Label"]
                         diff = diff_val["Value"]
-                        std = val.get("StdDev", "--")
+                        std = std_val["Value"]
 
                         value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
-                        diff_str = diff if isinstance(diff, str) else f"{float(diff):.2f}"
-                        std_str = std if isinstance(std, str) else f"{float(std):.2f}"
+                        diff_str = diff if isinstance(diff, str) else f"{float(diff):.{precision}f}"
+                        std_str = std if isinstance(std, str) else f"{float(std):.{precision}f}"
 
                         label_index = pair_index * 2 + offset
                         self.value_labels[label_index].configure(text=f"{value_str} {label}")

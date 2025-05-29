@@ -11,6 +11,7 @@ class CalibrationUtils():
         self.conn = None
         self.ensure_connection()
 
+
         # actual calibration stuff
         self.rm = pyvisa.ResourceManager()
 
@@ -21,23 +22,27 @@ class CalibrationUtils():
         self.current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
         self.difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
         self.std_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
-
         self.measParameters = {
-            "numOfMeas": 5,
+            "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
+            "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],}
+        self.measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
+            "frequencies":  [element for element in ["100 Hz", "1 kHz", "10 kHz"] for _ in range(len(self.measParameters["references"]))],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
-            "measurements": [None, None, None, None, None, None, None, None, None, None, None],
-            "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
-            "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
-            "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
+            "measurements": [None] * len(self.measParameters["references"]),
+            "diffMeas": [None] * len(self.measParameters["references"]),
+            "stdVars": [None] * len(self.measParameters["references"]),
+            "numOfMeas": 5,
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            "linearMeas": [None, None, None, None, None, None, None, None, None, None],
-            "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
-            "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
+            "linearUnits": "V" * len(self.measParameters["linearRefs"]),
+            "linearMeas": [None] * len(self.measParameters["linearRefs"]),
+            "diffLinearMeas": [None] * len(self.measParameters["linearRefs"]),
+            "linearStdVars": [None] * len(self.measParameters["linearRefs"]),
             "measType": "",
             "dirType": ""
         }
+
 
         pass
 
@@ -54,17 +59,19 @@ class CalibrationUtils():
         if std is None:
             std = "--"
 
+        print(self.measParameters["stdVars"])
         # Generate new value
         self.current_values[idx] = {"Value": measurement, "Label": unit}
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
+        self.std_values[idx] = {"Value": std, "Label": unit}
+
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
+        self.upper_panel.value_display.labels_values["stdDevs"][idx] = std
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
-
-        self.terminal.log(f'{measurement}')
 
     def waitForSettled(self):
         SETTLED = 12
@@ -102,6 +109,7 @@ class CalibrationUtils():
         self.F5522A.timeout = 2500
 
         self.measProcess()
+        self.stop_action()
 
     def changeMeasParam(self,typeOfMeas: str):
 
@@ -182,25 +190,6 @@ class CalibrationUtils():
             case _: # default
                 pass
 
-
-        measParameters = {
-            "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
-            "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
-            "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
-            "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
-            "measurements": [None] * len(self.measParameters["references"]),
-            "diffMeas": [None] * len(self.measParameters["references"]),
-            "stdVars": [None] * len(self.measParameters["references"]),
-            "numOfMeas": 5,
-            "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            "linearUnits": "V" * len(self.measParameters["linearRefs"]),
-            "linearMeas": [None] * len(self.measParameters["linearRefs"]),
-            "diffLinearMeas": [None] * len(self.measParameters["linearRefs"]),
-            "linearStdVars": [None] * len(self.measParameters["linearRefs"]),
-            "measType": "",
-            "dirType": ""
-        }
-
     def interrupt_calib(self, message):
         if not self.running:
             self.terminal.log(message)
@@ -216,8 +205,6 @@ class CalibrationUtils():
         # prvi del kalibracije
 
         for MeasNum in range(len(self.measParameters["references"])):
-            print(f'MeasNum {MeasNum}')
-            print(f'freqNum {self.freqNum}')
             # postavitev frekvence na nič pri meritvah DC veličin
             if self.dirType != ":AC" and self.measType != 'FREQuency' and MeasNum == 0:
                 F5522A_string = "OUT 0 Hz"
@@ -245,7 +232,6 @@ class CalibrationUtils():
 
             # konfiguracija meritve na multimetru HP34401A
             HP34401A_string = f"{'CONFigure:'}{self.measType}{self.dirType} {self.measParameters['range'][MeasNum]}"
-            print(HP34401A_string)
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
 
@@ -271,6 +257,8 @@ class CalibrationUtils():
             self.measParameters["measurements"][MeasNum] = MeasAverage / unitConv
             self.measParameters["diffMeas"][MeasNum] = self.measParameters["references"][MeasNum] - MeasAverage / unitConv
             self.measParameters["stdVars"][MeasNum] = stdVar / unitConv
+
+            print(self.measParameters["stdVars"][MeasNum])
 
             self.log_everything(MeasNum)
 
@@ -323,6 +311,10 @@ class CalibrationUtils():
                 self.terminal.log(f'IN F5522A: {F5522A_string}')
                 self.F5522A.write(F5522A_string)
 
+                self.terminal.log("")
+
+
+
 
 
     def ensure_connection(self):
@@ -357,11 +349,26 @@ class CalibrationUtils():
             calculated_value FLOAT,
             ref_set_diff FLOAT,
             std FLOAT,
-            frequency FLOAT,
+            unit STRING,
+            frequency STRING,
             timestamp DATETIME,
             FOREIGN KEY (calibration_id) REFERENCES calibrations(id)
         )
         """)
+
+        cursor.execute("""
+                CREATE TABLE IF NOT EXISTS colinearity (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    calibration_id INTEGER,
+                    linear_ref FLOAT,
+                    measurement FLOAT,
+                    linear_diff FLOAT,
+                    linear_std FLOAT,
+                    unit STRING,
+                    timestamp DATETIME,
+                    FOREIGN KEY (calibration_id) REFERENCES calibrations(id)
+                )
+                """)
 
         self.conn.commit()
         print(f"Database '{self.db_name}' created with 'calibrations' and 'measurements' tables.")
@@ -383,14 +390,27 @@ class CalibrationUtils():
         if self.conn:
             self.conn.close()
 
-    def log_measurement(self, calibration_id, set_value, calculated_value, ref_set_diff, std, frequency):
+    def log_measurement(self, calibration_id, set_value, calculated_value, ref_set_diff, std, frequency, unit):
         cursor = self.conn.cursor()
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cursor.execute("""
-            INSERT INTO measurements (calibration_id, set_value, calculated_value, ref_set_diff, std, frequency, timestamp)
+            INSERT INTO measurements (calibration_id, set_value, calculated_value, ref_set_diff, std, unit, frequency, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (calibration_id, set_value, calculated_value, ref_set_diff, std, unit, frequency, timestamp))
+
+        self.conn.commit()
+        print(f"Measurement logged for calibration ID {calibration_id}.")
+
+    def log_linear_refs(self, calibration_id, set_value, calculated_value, ref_set_diff, std, unit):
+        cursor = self.conn.cursor()
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        cursor.execute("""
+            INSERT INTO colinearity (calibration_id, linear_ref, measurement, linear_diff, linear_std, unit, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (calibration_id, set_value, calculated_value, ref_set_diff, std, frequency, timestamp))
+        """, (calibration_id, set_value, calculated_value, ref_set_diff, std, unit, timestamp))
 
         self.conn.commit()
         print(f"Measurement logged for calibration ID {calibration_id}.")

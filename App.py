@@ -40,7 +40,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.text_color = COLORS["lg_text"]
 
         self.title("kalibrator.py")
-        self.geometry(f"{1100}x{700}")
+        self.geometry(f"{1200}x{1200}")
 
         self.running = False
         self.graph_enabled = False
@@ -179,7 +179,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         self.vals = []
         self.diffs = []
-
+            # Update display
     def show_terminal(self):
         self.graph.pack_forget()
         self.terminal.pack(fill="both", expand=True)
@@ -233,11 +233,9 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
                 self.upper_panel.content_box.grid(row=0, column=0)
 
             # Enable graph only for certain modes
-            self.graph_enabled = mode in ["RES", "FREQ.", "PERIOD"]
-            if self.graph_enabled:
-                self.show_graph()
-            else:
-                self.show_terminal()
+            self.graph_enabled = mode in ["DCV","ACV"]
+            self.show_terminal()
+
 
             self.update_display_label(mode)
             self.clear_values()

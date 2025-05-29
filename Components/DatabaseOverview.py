@@ -95,18 +95,19 @@ class DatabaseOverview(customtkinter.CTkFrame):
 
         cursor = self.database.cursor()
         cursor.execute("""
-            SELECT set_value, calculated_value, ref_set_diff, std, timestamp
+            SELECT set_value, calculated_value, ref_set_diff, std,unit, frequency, timestamp
             FROM measurements
             WHERE calibration_id = ?
             ORDER BY timestamp
         """, (calib_id,))
         results = cursor.fetchall()
+        print(results)
 
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
         if results:
-            headers = ["Set Value", "Measured", "Δ (Diff)", "STD", "Frequency (Hz)", "Timestamp"]
+            headers = ["Reference", "Measured", "Δ (Diff)", "STD", "Frequency", "Timestamp"]
             for idx, header in enumerate(headers):
                 customtkinter.CTkLabel(
                     self.scrollable_frame, text=header,
@@ -114,15 +115,16 @@ class DatabaseOverview(customtkinter.CTkFrame):
                 ).grid(row=0, column=idx, padx=10, pady=(0, 5), sticky="w")
 
             for row_idx, row in enumerate(results, start=1):
-                set_value, calculated_value, ref_set_diff, std,frequency, timestamp = row
+                print(row)
+                set_value, calculated_value, ref_set_diff, std,unit,frequency, timestamp = row
 
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{set_value}", font=customtkinter.CTkFont(size=13)).grid(
+                customtkinter.CTkLabel(self.scrollable_frame, text=f"{set_value} {unit}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=0, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{calculated_value}", font=customtkinter.CTkFont(size=13)).grid(
+                customtkinter.CTkLabel(self.scrollable_frame, text=f"{calculated_value} {unit}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=1, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{ref_set_diff}", font=customtkinter.CTkFont(size=13)).grid(
+                customtkinter.CTkLabel(self.scrollable_frame, text=f"{ref_set_diff} {unit}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=2, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{std}", font=customtkinter.CTkFont(size=13)).grid(
+                customtkinter.CTkLabel(self.scrollable_frame, text=f"{std} {unit}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=3, padx=10, pady=2, sticky="w")
                 customtkinter.CTkLabel(self.scrollable_frame, text=f"{frequency}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=4, padx=10, pady=2, sticky="w")

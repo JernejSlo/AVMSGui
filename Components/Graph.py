@@ -1,5 +1,6 @@
 import tkinter
 import customtkinter
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -56,7 +57,7 @@ class GraphComponent(customtkinter.CTkFrame):
         self.actual_values = []
         self.time_values = []
         self.data_sets = [self.actual_values]
-        self.labels = ["Value"]
+        self.labels = ["Values"]
         self.selected_index = 0
 
         self.max_point_options = [10, 25, 50, 100, 200, None]
@@ -123,8 +124,8 @@ class GraphComponent(customtkinter.CTkFrame):
             if i < len(self.value_data_labels):
                 self.value_data_labels[i].configure(text=f"{value_str} {val['Label']}")"""
 
-    def update_graph(self,frame=None):
-        """ Update the graph display """
+    def update_graph(self, frame=None):
+        """ Update the graph display with points and a fitted line """
         self.ax.clear()
         data = self.data_sets[self.selected_index]
         time = self.time_values
@@ -133,7 +134,22 @@ class GraphComponent(customtkinter.CTkFrame):
             data = data[-self.max_points:]
             time = time[-self.max_points:]
 
-        self.ax.plot(time, data, label=self.labels[self.selected_index], color="cyan")
+        # Plot points
+        self.ax.scatter(time, data, label=self.labels[self.selected_index], color="cyan", s=20)
+
+        # Fit a line if enough points
+        if len(time) >= 2:
+            try:
+                # Convert timestamps or step labels to numeric if needed
+                x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
+                y_vals = np.array(data)
+                coeffs = np.polyfit(x_vals, y_vals, deg=1)
+                fit_line = np.poly1d(coeffs)
+                self.ax.plot(x_vals, fit_line(x_vals), color="lightgray", linestyle="--", linewidth=1.5, label="Fitted Line")
+            except Exception as e:
+                print("Fit failed:", e)
+
+        self.ax.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5)
         self.ax.legend()
         self.canvas.draw()
 
