@@ -64,7 +64,7 @@ class GenerationAndDisplayUtils():
                 return
 
             if self.graph_enabled:
-                graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": len(self.graph.time_values)}]
+                graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": len(self.graph.time_values) }]
                 self.graph.update_data(graph_values)
 
         if self.selected_mode == "2Ω" and not self.prompt_shown:
