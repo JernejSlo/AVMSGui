@@ -274,8 +274,8 @@ class ValueDisplay(customtkinter.CTkFrame):
                     std = val.get("StdDev", "--")
 
                     value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
-                    diff_str = diff if isinstance(diff, str) else f"{float(diff):.2f}"
-                    std_str = std if isinstance(std, str) else f"{float(std):.2f}"
+                    diff_str = diff if isinstance(diff, str) else f"{float(diff):.{precision}f}"
+                    std_str = std if isinstance(std, str) else f"{float(std):.{precision}f}"
 
                     self.single_value_labels[pair_index].configure(text=f"{value_str} {label}")
                     self.single_diff_labels[pair_index].configure(text=f"Δ {diff_str} {label}")
