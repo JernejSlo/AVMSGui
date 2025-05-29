@@ -64,8 +64,6 @@ class CalibrationUtils():
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values)
 
-        self.terminal.log(f'{measurement}')
-
     def waitForSettled(self):
         SETTLED = 12
         while not (int(self.F5522A.query('ISR?')) & (1 << SETTLED)):
@@ -151,7 +149,7 @@ class CalibrationUtils():
                 self.measParameters["dirType"] = ":AC"
                 pass
 
-            case '2Ω':
+            case 'RES':
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
                 self.measParameters["range"] = [100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6] # PROBLEM MOGOČ
                 self.measParameters["units"] = ["OHM", "kOHM", "kOHM", "kOHM", "MOHM", "MOHM", "MOHM"]
@@ -269,7 +267,7 @@ class CalibrationUtils():
 
         if self.measType == "VOLTage":
             # konfiguracija meritve na multimetru HP34401A
-            HP34401A_string = f"CONFigure:{self.measType}:{self.dirType} 10"
+            HP34401A_string = f"CONFigure:{self.measType}{self.dirType} 10"
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
 
