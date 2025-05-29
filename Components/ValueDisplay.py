@@ -30,11 +30,11 @@ class ValueDisplay(customtkinter.CTkFrame):
 
         self.labels_per_task = {
             task: {
-                "references": [0, 0.1, -0.1, 1, -1, 10, -10, 100, -100, 1000, -1000],
-                "units": [""] * 11,
-                "measurements": ["--"] * 11,
-                "diffMeas": ["--"] * 11,
-                "stdDevs": ["--"] * 11
+                "references": [0, 0.1, -0.1, 1, -1, 10, -10, 100, -100, 1000, -1000, 10000,10000],
+                "units": [""] * 13,
+                "measurements": ["--"] * 13,
+                "diffMeas": ["--"] * 13,
+                "stdDevs": ["--"] * 13
             }
             for task in ["DCV", "DCI", "ACV", "ACI", "2Ω", "FREQ.", "PERIOD"]
         }
@@ -59,6 +59,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         row_block = 0
 
         for i, ref in enumerate(references):
+            print(i)
             if i in used_indices:
                 continue
 
@@ -188,7 +189,7 @@ class ValueDisplay(customtkinter.CTkFrame):
         # Rounding slider
         self.rounding_precision = customtkinter.IntVar(value=2)
         slider_frame = customtkinter.CTkFrame(self, fg_color="transparent")
-        slider_frame.grid(row=row_block * 4 + 1, column=0, columnspan=total_columns, pady=(10, 0), sticky="ew")
+        slider_frame.grid(row=row_block * 5 + 2, column=0, columnspan=total_columns, pady=(10, 0), sticky="ew")
         slider_frame.grid_columnconfigure(0, weight=1)
         slider_frame.grid_columnconfigure(1, weight=0)
         slider_frame.grid_columnconfigure(2, weight=1)
@@ -273,8 +274,8 @@ class ValueDisplay(customtkinter.CTkFrame):
                     std = val.get("StdDev", "--")
 
                     value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
-                    diff_str = diff if isinstance(diff, str) else f"{float(diff):.2f}"
-                    std_str = std if isinstance(std, str) else f"{float(std):.2f}"
+                    diff_str = diff if isinstance(diff, str) else f"{float(diff):.{precision}f}"
+                    std_str = std if isinstance(std, str) else f"{float(std):.{precision}f}"
 
                     self.single_value_labels[pair_index].configure(text=f"{value_str} {label}")
                     self.single_diff_labels[pair_index].configure(text=f"Δ {diff_str} {label}")
