@@ -30,7 +30,7 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def __init__(self):
 
-        self.skip_fake_version = True
+        self.skip_fake_version = False
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
@@ -121,95 +121,42 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
     def update_display_label(self, mode):
         j = 0
-        for i, header in enumerate(self.upper_panel.value_display.headers):
+        total_pairs = len(self.upper_panel.value_display.pair_indices)
+
+        for pair_index in range(total_pairs):
+            if j >= len(self.measParameters["references"]):
+                # Out of data — hide both single & double layouts
+                self.upper_panel.value_display.single_value_labels[pair_index].grid_remove()
+                self.upper_panel.value_display.single_diff_labels[pair_index].grid_remove()
+
+                self.upper_panel.value_display.value_labels[pair_index * 2].grid_remove()
+                self.upper_panel.value_display.value_labels[pair_index * 2 + 1].grid_remove()
+                self.upper_panel.value_display.diff_labels[pair_index * 2].grid_remove()
+                self.upper_panel.value_display.diff_labels[pair_index * 2 + 1].grid_remove()
+
+                self.upper_panel.value_display.headers[pair_index].grid_remove()
+                continue
+
+            # Show header
+            self.upper_panel.value_display.headers[pair_index].grid()
+
             references = self.measParameters["references"]
             units = self.measParameters["units"]
-
-            if j >= len(references):
-                header.grid_remove()
-                for z in range(j,len(self.upper_panel.value_display.value_labels)):
-                    self.upper_panel.value_display.value_labels[z].grid_remove()
-                    self.upper_panel.value_display.diff_labels[z].grid_remove()
-                continue
-            else:
-                header.grid()
-                for z in range(j, len(self.upper_panel.value_display.value_labels)):
-                    self.upper_panel.value_display.value_labels[z].grid()
-                    self.upper_panel.value_display.diff_labels[z].grid()
-
-            print(references)
-            print(mode)
-            print(len(self.upper_panel.value_display.headers))
             ref = references[j]
-            r1 = abs(references[j])
-            if j >= len(references)-1:
-                r2 = "13412412341234132"
-            else:
-                r2 = abs(references[j+1])
-            text_prefix = "Measured at"
+            r1 = abs(ref)
+            r2 = abs(references[j + 1]) if j + 1 < len(references) else None
 
-            is_pair = True if r1==r2 else False
-            if r1 == 0: is_pair = False
-            if is_pair:
-                value_text = f"{text_prefix} ±{abs(ref)}"
-                print("Switching to double")
-                self.switch_to_double(i)
-            else:
-                value_text = f"{text_prefix} {ref}"
-                print("switching to single")
-                self.switch_to_single(i,self.title)
+            is_pair = r1 == r2 and r1 != 0
             unit = units[j]
-            header.configure(text=f"{value_text} {unit}")
-            j = j+2 if is_pair else j+1
 
-    def switch_to_double(self, pair_index):
-        """Switch a single value display back to double (±) format"""
-        i, neg_index = self.upper_panel.value_display.pair_indices[pair_index]
-        unit = self.upper_panel.value_display.labels_values["units"][i]
-        ref = self.upper_panel.value_display.labels_values["references"][i]
-        header = self.upper_panel.value_display.headers[pair_index]
-
-        # Update header
-        header.configure(text=f"Measured at ±{abs(ref)} {unit}")
-
-        # Positive value and diff labels
-        val_pos = self.upper_panel.value_display.value_labels[pair_index * 2]
-        diff_pos = self.upper_panel.value_display.diff_labels[pair_index * 2]
-
-        val_pos.grid_configure(columnspan=1, column=(pair_index % 3) * 2)
-        diff_pos.grid_configure(columnspan=1, column=(pair_index % 3) * 2)
-
-        # Restore negative side
-        val_neg = self.upper_panel.value_display.value_labels[pair_index * 2 + 1]
-        diff_neg = self.upper_panel.value_display.diff_labels[pair_index * 2 + 1]
-
-        val_neg.grid()  # Re-show
-        diff_neg.grid()
-
-        val_neg.grid_configure(column=(pair_index % 3) * 2 + 1)
-        diff_neg.grid_configure(column=(pair_index % 3) * 2 + 1)
-
-    def switch_to_single(self, pair_index, mode):
-        """Transform a value pair into a single centered display"""
-        i, neg_index = self.upper_panel.value_display.pair_indices[pair_index]
-        unit = self.upper_panel.value_display.labels_values["units"][i]
-        ref = self.upper_panel.value_display.labels_values["references"][i]
-        header = self.upper_panel.value_display.headers[pair_index]
-
-        # Update header
-        header.configure(text=f"Measured at {ref} {unit}")
-
-        # Center value and diff labels across both columns
-        val_label = self.upper_panel.value_display.value_labels[pair_index * 2]
-        diff_label = self.upper_panel.value_display.diff_labels[pair_index * 2]
-
-        val_label.grid_configure(columnspan=2)
-        diff_label.grid_configure(columnspan=2)
-
-        # Hide the "negative" label if it exists
-        if pair_index * 2 + 1 < len(self.upper_panel.value_display.value_labels):
-            self.upper_panel.value_display.value_labels[pair_index * 2 + 1].grid_remove()
-            self.upper_panel.value_display.diff_labels[pair_index * 2 + 1].grid_remove()
+            if is_pair:
+                self.upper_panel.value_display.switch_to_double(pair_index)
+                self.upper_panel.value_display.headers[pair_index].configure(text=f"Measured at ±{r1} {unit}")
+                j += 2
+            else:
+                self.upper_panel.value_display.switch_to_single(pair_index, self.title)
+                self.upper_panel.value_display.headers[pair_index].configure(text=f"Measured at {ref} {unit}")
+                j += 1
 
     def clear_values(self):
         """Clear all displayed measurement and difference values."""
