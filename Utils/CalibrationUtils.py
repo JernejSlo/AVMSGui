@@ -63,12 +63,13 @@ class CalibrationUtils():
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
+        self.std_values[idx] = {"Value": std, "Label": unit}
+
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
 
-        self.terminal.log(f'{measurement}')
 
     def waitForSettled(self):
         SETTLED = 12
@@ -86,7 +87,7 @@ class CalibrationUtils():
             Meas = float(self.HP34401A.query(HP34401A_string))
             self.terminal.log(f"OUT HP34401A: {str(Meas)}")
             MeasArray[SameMeasNum] = Meas
-            if self.interrupt_calib("Generation interrupted."): return
+            if self.interrupt_calib("Measurement interrupted."): return
 
         # izračun povprečne vrednosti meritev
         MeasAverage = sum(MeasArray) / numOfMeas
@@ -114,6 +115,9 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
                 self.measParameters["linearRefs"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 self.measParameters["linearUnits"] = "V" * len(self.measParameters["linearRefs"])
                 self.measParameters["measType"] = "VOLTage"
@@ -140,6 +144,9 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 10, -10, 100, -100, 1, -1, 2.99999, -2.99999]
                 self.measParameters["range"] = [0.01, 0.01, 0.01, 0.1, 0.1, 1, 1, 3, 3]
                 self.measParameters["units"] = ["mA", "mA", "mA", "mA", "mA", "A", "A", "A", "A"]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
                 self.measParameters["measType"] = "CURRent"
                 self.measParameters["dirType"] = ":DC"
                 pass
@@ -159,6 +166,9 @@ class CalibrationUtils():
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
                 self.measParameters["range"] = [100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6] # PROBLEM MOGOČ
                 self.measParameters["units"] = ["OHM", "kOHM", "kOHM", "kOHM", "MOHM", "MOHM", "MOHM"]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
                 self.measParameters["measType"] = "FRESistance" # RESistance do izključno 100 kΩ
                 self.measParameters["dirType"] = ""
                 pass
@@ -167,6 +177,9 @@ class CalibrationUtils():
                 self.measParameters["references"] = [3, 30, 300, 3, 30, 300]
                 self.measParameters["range"] = [""] * len(self.measParameters["references"])
                 self.measParameters["units"] = ["Hz", "Hz", "Hz", "kHz", "kHz", "kHz"]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
                 self.measParameters["measType"] = "FREQuency"
                 self.measParameters["dirType"] = ""
                 pass
@@ -180,9 +193,9 @@ class CalibrationUtils():
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
-            "measurements": [None, None, None, None, None, None, None, None, None, None, None],
-            "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
-            "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
+            "measurements": [None] * len(self.measParameters["references"]),
+            "diffMeas": [None] * len(self.measParameters["references"]),
+            "stdVars": [None] * len(self.measParameters["references"]),
             "numOfMeas": 5,
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
             "linearUnits": "V" * len(self.measParameters["linearRefs"]),
@@ -252,10 +265,10 @@ class CalibrationUtils():
             self.terminal.log(f'IN F5522A: {F5522A_string}')
             self.F5522A.write(F5522A_string)
 
-            if self.interrupt_calib("Generation interrupted."): return
+            if self.interrupt_calib("Measurement interrupted."): return
             # čakanje na izravnavo referenčne vrednosti
             self.waitForSettled()
-            if self.interrupt_calib("Generation interrupted."): return
+            if self.interrupt_calib("Measurement interrupted."): return
 
             # izračun in zapis meritve
             [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], self.measParameters["range"][MeasNum])
