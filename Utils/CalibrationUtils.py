@@ -28,7 +28,7 @@ class CalibrationUtils():
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "measurements": [None, None, None, None, None, None, None, None, None, None, None],
-            #"frequencies": ["10 Hz", "1 kHz", 100 kHz, None, None, None, None, None, None, None],
+            "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
             "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
             "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -78,16 +78,19 @@ class CalibrationUtils():
         # ponovitev meritev tolikokrat kot je vrednost numOfMeas
         for SameMeasNum in range(numOfMeas):
             HP34401A_string = f"MEASure:{self.measType}{self.dirType}? {str(measRange)}"
-            self.terminal.log(HP34401A_string)
+            self.terminal.log(f"IN HP34401A: {HP34401A_string}")
             Meas = float(self.HP34401A.query(HP34401A_string))
-            self.terminal.log(str(Meas))
+            self.terminal.log(f"OUT HP34401A: {str(Meas)}")
             MeasArray[SameMeasNum] = Meas
+            if self.interrupt_calib("Generation interrupted."): return
 
         # izračun povprečne vrednosti meritev
         MeasAverage = sum(MeasArray) / numOfMeas
 
         # izračun standardne deviacije meritev
         stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1)) ** (1 / 2)
+
+
 
         return MeasAverage, stdVar
 
@@ -107,14 +110,24 @@ class CalibrationUtils():
                 self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000]
                 self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000]
                 self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
+                self.measParameters["linearRefs"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                self.measParameters["linearUnits"] = "V" * len(self.measParameters["linearRefs"])
                 self.measParameters["measType"] = "VOLTage"
                 self.measParameters["dirType"] = ":DC"
                 pass
 
             case 'ACV':
-                self.measParameters["references"] = [0, 100, -100, 1, -1, 10, -10, 100, -100, 750, -750]
-                self.measParameters["range"] = [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 750, 750]
-                self.measParameters["units"] = ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"]
+                self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
+                self.measParameters["linearRefs"] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                self.measParameters["linearUnits"] = "Hz" * len(self.measParameters["linearRefs"])
+                self.measParameters["linearMeas"] = [None] * len(self.measParameters["linearRefs"])
+                self.measParameters["diffLinearMeas"] = [None] * len(self.measParameters["linearRefs"])
+                self.measParameters["linearStdVars"] = [None] * len(self.measParameters["linearRefs"])
                 self.measParameters["measType"] = "VOLTage"
                 self.measParameters["dirType"] = ":AC"
                 pass
@@ -128,18 +141,21 @@ class CalibrationUtils():
                 pass
 
             case 'ACI':
-                self.measParameters["references"] = [0, 1, -1, 3, -3]
-                self.measParameters["range"] = [1, 1, 1, 3, 3]
-                self.measParameters["units"] = ["A", "A", "A", "A", "A"]
+                self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["range"] = [element for element in [1, 3] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["range"] = [element for element in ["A", "A"] for _ in range(len(self.measParameters["frequencies"]))]
+                self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
+                self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
+                self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
                 self.measParameters["measType"] = "CURRent"
                 self.measParameters["dirType"] = ":AC"
                 pass
 
             case '2Ω':
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
-                self.measParameters["range"] = [100, 1, 10, 100, 1, 10, 100] # PROBLEM MOGOČ
-                self.measParameters["units"] = ["ohm", "k ohm", "k ohm", "k ohm", "M ohm", "M ohm", "M ohm"]
-                self.measParameters["measType"] = "FRESistance" # RESistance od vključno 100 kΩ naprej
+                self.measParameters["range"] = [100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6] # PROBLEM MOGOČ
+                self.measParameters["units"] = ["OHM", "kOHM", "kOHM", "kOHM", "MOHM", "MOHM", "MOHM"]
+                self.measParameters["measType"] = "FRESistance" # RESistance do izključno 100 kΩ
                 self.measParameters["dirType"] = ""
                 pass
 
@@ -154,40 +170,42 @@ class CalibrationUtils():
             case _: # default
                 pass
 
-        print(self.measParameters)
 
         measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
+            "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
             "measurements": [None, None, None, None, None, None, None, None, None, None, None],
             "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
             "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
             "numOfMeas": 5,
             "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            "linearMeas": [None, None, None, None, None, None, None, None, None, None],
-            "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
-            "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
+            "linearUnits": "V" * len(self.measParameters["linearRefs"]),
+            "linearMeas": [None] * len(self.measParameters["linearRefs"]),
+            "diffLinearMeas": [None] * len(self.measParameters["linearRefs"]),
+            "linearStdVars": [None] * len(self.measParameters["linearRefs"]),
             "measType": "",
             "dirType": ""
         }
 
+    def interrupt_calib(self, message):
+        if not self.running:
+            self.terminal.log(message)
+            return True
 
     def measProcess(self):
         for i in range(16):
             self.F5522A.query('ERR?')
         self.measType = self.measParameters['measType']
         self.dirType = self.measParameters['dirType']
+        self.freqNum = 0
+        self.frequency = self.measParameters["frequencies"][self.freqNum]
         # prvi del kalibracije
 
         for MeasNum in range(len(self.measParameters["references"])):
-            # konfiguracija meritve na multimetru HP34401A
-
-            HP34401A_string = f"{'CONFigure:'}{self.measType}{':'}{self.dirType} {self.measParameters['range'][MeasNum]}"
-            print(HP34401A_string)
-            self.terminal.log(f'IN HP34401A: {HP34401A_string}')
-            self.HP34401A.write(HP34401A_string)
-
+            print(f'MeasNum {MeasNum}')
+            print(f'freqNum {self.freqNum}')
             # postavitev frekvence na nič pri meritvah DC veličin
             if self.dirType != ":AC" and self.measType != 'FREQuency' and MeasNum == 0:
                 F5522A_string = "OUT 0 Hz"
@@ -195,10 +213,29 @@ class CalibrationUtils():
                 self.F5522A.write(F5522A_string)
 
             # postavitev referenčne napetosti na 1 V pri meritvah frekvence
+            if self.dirType == ":AC":
+                self.frequency = self.measParameters["frequencies"][self.freqNum]
+                F5522A_string = f"OUT {self.frequency}"
+                self.terminal.log(f'IN F5522A: {F5522A_string}')
+                self.F5522A.write(F5522A_string)
+                self.freqNum = (self.freqNum + 1) % len(self.measParameters["frequencies"])
+
+            # postavitev na dvožični način merjenja upornosti
+            if self.measType == 'FRESistance' and MeasNum == 3:
+                self.measParameters["measType"] = 'RESistance'
+                self.measType = self.measParameters['measType']
+
+            # postavitev referenčne napetosti na 1 V pri meritvah frekvence
             if self.measType == 'FREQuency' and MeasNum == 0:
                 F5522A_string = "OUT 1 V"
                 self.terminal.log(f'IN F5522A: {F5522A_string}')
                 self.F5522A.write(F5522A_string)
+
+            # konfiguracija meritve na multimetru HP34401A
+            HP34401A_string = f"{'CONFigure:'}{self.measType}{self.dirType} {self.measParameters['range'][MeasNum]}"
+            print(HP34401A_string)
+            self.terminal.log(f'IN HP34401A: {HP34401A_string}')
+            self.HP34401A.write(HP34401A_string)
 
             # konfiguracija referenčne vrednosti na kalibratorju F5522A
             F5522A_string = f"{'OUT'} {self.measParameters['references'][MeasNum]} {self.measParameters['units'][MeasNum]}"
@@ -225,7 +262,7 @@ class CalibrationUtils():
 
             # izklop referenčne vrednosti na kalibratorju F5522A
             F5522A_string = 'STBY'
-            self.terminal.log(F5522A_string)
+            self.terminal.log(f'IN F5522A: {F5522A_string}')
             self.F5522A.write(F5522A_string)
 
         if self.measType == "VOLTage":
@@ -236,10 +273,18 @@ class CalibrationUtils():
 
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
-                unit = self.measParameters['units'][MeasNum]
+                if self.dirType == ":AC":
+                    self.measType = "FREQuency"
+                    self.range = ""
+                    F5522A_string = "OUT 10 V"
+                    self.terminal.log(f'IN F5522A: {F5522A_string}')
+                    self.F5522A.write(F5522A_string)
+                if self.dirType == ":DC":
+                    self.measType = "VOLTage"
+                    self.range = 10
 
                 # konfiguracija referenčne vrednosti na kalibratorju F5522A
-                F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {'V'}"
+                F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {self.measParameters['linearUnits'][MeasNum]}"
                 self.terminal.log(f'IN F5522A: {F5522A_string}')
                 self.F5522A.write(F5522A_string)
 
@@ -252,8 +297,8 @@ class CalibrationUtils():
                 self.waitForSettled()
 
                 # izračun in zapis meritve
-                HP34401A_string = f"MEASure:{self.measType}:{self.dirType}? 10"
-                [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], measRange = 10)
+                HP34401A_string = f"MEASure:{self.measType}:{self.dirType}? {self.range}"
+                [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], self.range)
                 self.measParameters["linearMeas"][MeasNum] = MeasAverage
                 self.measParameters["linearStdVars"][MeasNum] = stdVar
 
@@ -261,6 +306,8 @@ class CalibrationUtils():
                 F5522A_string = 'STBY'
                 self.terminal.log(f'IN F5522A: {F5522A_string}')
                 self.F5522A.write(F5522A_string)
+
+
 
     def ensure_connection(self):
         """ Make sure the database exists and open a connection """
