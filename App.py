@@ -233,7 +233,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
                 self.upper_panel.content_box.grid(row=0, column=0)
 
             # Enable graph only for certain modes
-            self.graph_enabled = mode in ["2Ω", "FREQ.", "PERIOD"]
+            self.graph_enabled = mode in ["RES", "FREQ.", "PERIOD"]
             if self.graph_enabled:
                 self.show_graph()
             else:

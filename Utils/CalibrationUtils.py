@@ -151,7 +151,7 @@ class CalibrationUtils():
                 self.measParameters["dirType"] = ":AC"
                 pass
 
-            case '2Ω':
+            case 'RES':
                 self.measParameters["references"] = [100, 1, 10, 100, 1, 10, 100]  # PROBLEM MOGOČ
                 self.measParameters["range"] = [100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6] # PROBLEM MOGOČ
                 self.measParameters["units"] = ["OHM", "kOHM", "kOHM", "kOHM", "MOHM", "MOHM", "MOHM"]
