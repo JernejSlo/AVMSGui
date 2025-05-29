@@ -18,7 +18,6 @@ class GenerationAndDisplayUtils():
         total_values = len(self.upper_panel.value_display.labels_values["references"])
         current_values = []
         difference_values = []
-        std_values = []
 
         for index in range(total_values):
             if self.interrupt("Generation interrupted."):
@@ -28,7 +27,7 @@ class GenerationAndDisplayUtils():
                 unit = self.upper_panel.value_display.labels_values["units"][index]
                 reference = self.upper_panel.value_display.labels_values["references"][index]
             except IndexError:
-                unit = ""
+                unit = "mV"
                 reference = 0
 
             if self.sidebar.selected_mode in ("DCV", "ACV"):
@@ -58,7 +57,7 @@ class GenerationAndDisplayUtils():
                 frequency=None
             )
 
-            self.upper_panel.value_display.update_values(current_values, difference_values, std_values)
+            self.upper_panel.value_display.update_values(current_values, difference_values)
             time.sleep(0.1)
 
         if self.interrupt("Generation interrupted."):

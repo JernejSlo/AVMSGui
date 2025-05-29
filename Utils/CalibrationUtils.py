@@ -43,18 +43,14 @@ class CalibrationUtils():
 
     def log_everything(self,idx=0):
 
-        measurement = self.measParameters["measurements"][idx]
         unit = self.measParameters["units"][idx]
-        diff = self.measParameters["diffMeas"][idx]
-        std = self.measParameters["stdVars"][idx]
-
+        measurement = self.measParameters["measurements"][idx]
         if measurement is None:
             measurement = "--"
-            unit = ""
-
+        diff = self.measParameters["diffMeas"][idx]
         if diff is None:
             diff = "--"
-
+        std = self.measParameters["stdVars"][idx]
         if std is None:
             std = "--"
 
@@ -63,13 +59,12 @@ class CalibrationUtils():
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
-        self.std_values[idx] = {"Value": std, "Label": unit}
-
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
 
+        self.terminal.log(f'{measurement}')
 
     def waitForSettled(self):
         SETTLED = 12
