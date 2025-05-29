@@ -59,6 +59,8 @@ class ValueDisplay(customtkinter.CTkFrame):
         column = 0
         row_block = 0
 
+        self.pair_indices = []  # Track original indices for switching
+
         for i, ref in enumerate(references):
             if i in used_indices:
                 continue
@@ -68,40 +70,40 @@ class ValueDisplay(customtkinter.CTkFrame):
             except ValueError:
                 neg_index = None
 
-            is_pair = (
-                neg_index is not None and
-                neg_index != i and
-                neg_index not in used_indices and
-                ref > 0
+            # Force everything into "pair-style" initialization
+            self.pair_indices.append((i, neg_index))
+
+            header = customtkinter.CTkLabel(
+                self, text=f"Measured at ±{abs(ref)}{units[i]}",
+                font=customtkinter.CTkFont(size=15, weight="bold"),
+                width=header_width
             )
+            header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
+            self.headers.append(header)
 
-            if is_pair:
-                # Header
-                header = customtkinter.CTkLabel(
-                    self, text=f"Measured at ±{ref}V",
-                    font=customtkinter.CTkFont(size=15, weight="bold"),
-                    width=header_width
-                )
-                header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
+            # Positive side
+            label_pos = customtkinter.CTkLabel(
+                self, text=f"{measurements[i]} {units[i]}",
+                font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
+                width=label_width
+            )
+            label_pos.grid(row=row_block * 3 + 1, column=column, padx=padx, pady=(4, 2), sticky="n")
 
-                # Value labels
-                label_pos = customtkinter.CTkLabel(
-                    self, text=f"{measurements[i]} {units[i]}",
-                    font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
-                    width=label_width
-                )
+            diff_pos = customtkinter.CTkLabel(
+                self, text=f"Δ {differences[i]} {units[i]}",
+                font=customtkinter.CTkFont(size=14),
+                width=label_width
+            )
+            diff_pos.grid(row=row_block * 3 + 2, column=column, padx=padx, pady=(0, 8), sticky="n")
+
+            self.value_labels.append(label_pos)
+            self.diff_labels.append(diff_pos)
+
+            # Negative side (real or dummy)
+            if neg_index is not None:
                 label_neg = customtkinter.CTkLabel(
                     self, text=f"{measurements[neg_index]} {units[neg_index]}",
                     font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
-                    width=label_width
-                )
-                label_pos.grid(row=row_block * 3 + 1, column=column, padx=padx, pady=(4, 2), sticky="n")
-                label_neg.grid(row=row_block * 3 + 1, column=column + 1, padx=padx, pady=(4, 2), sticky="n")
-
-                # Difference labels
-                diff_pos = customtkinter.CTkLabel(
-                    self, text=f"Δ {differences[i]} {units[i]}",
-                    font=customtkinter.CTkFont(size=14),
                     width=label_width
                 )
                 diff_neg = customtkinter.CTkLabel(
@@ -109,44 +111,29 @@ class ValueDisplay(customtkinter.CTkFrame):
                     font=customtkinter.CTkFont(size=14),
                     width=label_width
                 )
-                diff_pos.grid(row=row_block * 3 + 2, column=column, padx=padx, pady=(0, 8), sticky="n")
-                diff_neg.grid(row=row_block * 3 + 2, column=column + 1, padx=padx, pady=(0, 8), sticky="n")
-
-                self.value_labels.extend([label_pos, label_neg])
-                self.diff_labels.extend([diff_pos, diff_neg])
-                self.headers.append(header)
-                used_indices.update({i, neg_index})
-                column += 2
-
             else:
-                # Single-entry header
-                header = customtkinter.CTkLabel(
-                    self, text=f"Measured at {ref}V",
-                    font=customtkinter.CTkFont(size=15, weight="bold"),
-                    width=header_width
-                )
-                header.grid(row=row_block * 3, column=column, columnspan=2, padx=padx, pady=(10, 2), sticky="n")
-
-                val_label = customtkinter.CTkLabel(
-                    self, text=f"{measurements[i]} {units[i]}",
+                label_neg = customtkinter.CTkLabel(
+                    self, text="--",
                     font=customtkinter.CTkFont(size=label_value_size, weight="bold"),
                     width=label_width
                 )
-                val_label.grid(row=row_block * 3 + 1, column=column, columnspan=2, padx=padx, pady=(4, 2), sticky="n")
-
-                diff_label = customtkinter.CTkLabel(
-                    self, text=f"Δ {differences[i]} {units[i]}",
+                diff_neg = customtkinter.CTkLabel(
+                    self, text="Δ --",
                     font=customtkinter.CTkFont(size=14),
                     width=label_width
                 )
-                diff_label.grid(row=row_block * 3 + 2, column=column, columnspan=2, padx=padx, pady=(0, 8), sticky="n")
 
-                self.value_labels.append(val_label)
-                self.diff_labels.append(diff_label)
-                self.headers.append(header)
-                used_indices.add(i)
-                column += 2
+            label_neg.grid(row=row_block * 3 + 1, column=column + 1, padx=padx, pady=(4, 2), sticky="n")
+            diff_neg.grid(row=row_block * 3 + 2, column=column + 1, padx=padx, pady=(0, 8), sticky="n")
 
+            self.value_labels.append(label_neg)
+            self.diff_labels.append(diff_neg)
+
+            used_indices.add(i)
+            if neg_index is not None:
+                used_indices.add(neg_index)
+
+            column += 2
             if column >= columns_per_row * 2:
                 column = 0
                 row_block += 1
@@ -178,7 +165,7 @@ class ValueDisplay(customtkinter.CTkFrame):
 
         self.precision_slider.grid(row=0, column=1, padx=(0, 20), sticky="ew")
 
-        self.precision_value_label = customtkinter.CTkLabel(slider_frame, text="2 digits",
+        self.precision_value_label = customtkinter.CTkLabel(slider_frame, text="2 decimals",
 
                                                             font=customtkinter.CTkFont(size=12))
         self.precision_value_label.grid(row=0, column=2, sticky="w")

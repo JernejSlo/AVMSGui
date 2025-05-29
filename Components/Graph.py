@@ -7,6 +7,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Utils.color_theme import COLORS
 
 
+# linear refs na x
+# linear meas na y
+
+
 class GraphComponent(customtkinter.CTkFrame):
     """ Real-time updating graph component (Uses CustomTkinter default background) """
 

@@ -21,12 +21,13 @@ from Components.ValueDisplay import ValueDisplay
 from Components.BottomTabBar import BottomTabBar
 
 from Utils.CalibrationUtils import CalibrationUtils
+from Utils.GenerationAndDisplayUtils import GenerationAndDisplayUtils
 from Utils.color_theme import COLORS
 
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
-class App(customtkinter.CTk,CalibrationUtils):
+class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def __init__(self):
 
         self.skip_fake_version = True
@@ -124,38 +125,18 @@ class App(customtkinter.CTk,CalibrationUtils):
             references = self.measParameters["references"]
             units = self.measParameters["units"]
 
-            if j < len(references):
-                val = self.upper_panel.value_display.value_labels[j]
-                diff = self.upper_panel.value_display.diff_labels[j]
-            if j < len(references)-1:
-                val2 = self.upper_panel.value_display.value_labels[j+1]
-                diff2 = self.upper_panel.value_display.diff_labels[j+1]
-
-
-
             if j >= len(references):
                 header.grid_remove()
-                if j>len(references):
-                    try:
-                        val.grid_remove()
-                        diff.grid_remove()
-
-                        val2.grid_remove()
-                        diff2.grid_remove()
-                    except:
-                        pass
+                for z in range(j,len(self.upper_panel.value_display.value_labels)):
+                    self.upper_panel.value_display.value_labels[z].grid_remove()
+                    self.upper_panel.value_display.diff_labels[z].grid_remove()
                 continue
             else:
                 header.grid()
+                for z in range(j, len(self.upper_panel.value_display.value_labels)):
+                    self.upper_panel.value_display.value_labels[z].grid()
+                    self.upper_panel.value_display.diff_labels[z].grid()
 
-                try:
-                    val.grid()
-                    diff.grid()
-
-                    val2.grid()
-                    diff2.grid()
-                except:
-                    pass
             print(references)
             print(mode)
             print(len(self.upper_panel.value_display.headers))
@@ -168,14 +149,68 @@ class App(customtkinter.CTk,CalibrationUtils):
             text_prefix = "Measured at"
 
             is_pair = True if r1==r2 else False
-
+            if r1 == 0: is_pair = False
             if is_pair:
                 value_text = f"{text_prefix} ±{abs(ref)}"
+                print("Switching to double")
+                self.switch_to_double(i)
             else:
                 value_text = f"{text_prefix} {ref}"
+                print("switching to single")
+                self.switch_to_single(i,self.title)
             unit = units[j]
             header.configure(text=f"{value_text} {unit}")
             j = j+2 if is_pair else j+1
+
+    def switch_to_double(self, pair_index):
+        """Switch a single value display back to double (±) format"""
+        i, neg_index = self.upper_panel.value_display.pair_indices[pair_index]
+        unit = self.upper_panel.value_display.labels_values["units"][i]
+        ref = self.upper_panel.value_display.labels_values["references"][i]
+        header = self.upper_panel.value_display.headers[pair_index]
+
+        # Update header
+        header.configure(text=f"Measured at ±{abs(ref)} {unit}")
+
+        # Positive value and diff labels
+        val_pos = self.upper_panel.value_display.value_labels[pair_index * 2]
+        diff_pos = self.upper_panel.value_display.diff_labels[pair_index * 2]
+
+        val_pos.grid_configure(columnspan=1, column=(pair_index % 3) * 2)
+        diff_pos.grid_configure(columnspan=1, column=(pair_index % 3) * 2)
+
+        # Restore negative side
+        val_neg = self.upper_panel.value_display.value_labels[pair_index * 2 + 1]
+        diff_neg = self.upper_panel.value_display.diff_labels[pair_index * 2 + 1]
+
+        val_neg.grid()  # Re-show
+        diff_neg.grid()
+
+        val_neg.grid_configure(column=(pair_index % 3) * 2 + 1)
+        diff_neg.grid_configure(column=(pair_index % 3) * 2 + 1)
+
+    def switch_to_single(self, pair_index, mode):
+        """Transform a value pair into a single centered display"""
+        i, neg_index = self.upper_panel.value_display.pair_indices[pair_index]
+        unit = self.upper_panel.value_display.labels_values["units"][i]
+        ref = self.upper_panel.value_display.labels_values["references"][i]
+        header = self.upper_panel.value_display.headers[pair_index]
+
+        # Update header
+        header.configure(text=f"Measured at {ref} {unit}")
+
+        # Center value and diff labels across both columns
+        val_label = self.upper_panel.value_display.value_labels[pair_index * 2]
+        diff_label = self.upper_panel.value_display.diff_labels[pair_index * 2]
+
+        val_label.grid_configure(columnspan=2)
+        diff_label.grid_configure(columnspan=2)
+
+        # Hide the "negative" label if it exists
+        if pair_index * 2 + 1 < len(self.upper_panel.value_display.value_labels):
+            self.upper_panel.value_display.value_labels[pair_index * 2 + 1].grid_remove()
+            self.upper_panel.value_display.diff_labels[pair_index * 2 + 1].grid_remove()
+
     def clear_values(self):
         """Clear all displayed measurement and difference values."""
         for val_label in self.upper_panel.value_display.value_labels:
@@ -267,105 +302,6 @@ class App(customtkinter.CTk,CalibrationUtils):
         self.database_overview.populate_dropdown()
         self.upper_panel.controls.stop_button.configure(state="disabled",fg_color="#B0B0B0")
         self.upper_panel.controls.start_button.configure(state="enabled",fg_color="steel blue")
-
-    def get_calibration_values(self):
-        """ Generate one new value per second, updating values and differences with terminal logging """
-
-
-        while self.running:
-            # Get unit and reference for this index
-
-            # Log before
-            #self.terminal.log(f"Executing: Measure {self.sidebar.selected_mode} at index {index} (ref: {reference} {unit})")
-            try:
-                self.calibrate()
-            except Exception as e:
-
-                if not self.skip_fake_version:
-                    print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
-                    print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
-                    print(Fore.CYAN + Style.BRIGHT + "Traceback:")
-                    traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
-                    for line in traceback_lines:
-                        print(Fore.CYAN + line, end='')  # 'end' avoids double newlines
-
-                if not self.skip_fake_version:
-                    print("Returning to fake version.")
-                    self.get_calibration_values = self.generate_values_no_machine
-                    self.generate_values_no_machine()
-                else:
-                    raise e
-                return
-            # Generate new value
-            if self.graph_enabled:
-                graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
-                                {"Value": random.uniform(0, 5), "Label": "A"},
-                                {"Value": random.uniform(0, 1000), "Label": "Ω"}]
-
-                self.graph.update_data(graph_values)
-
-            # Log result
-            #self.terminal.log(f"Updated index {index}: {new_value} {unit}, Δ = {difference} {unit}")
-            time.sleep(1)
-            self.running = False
-
-    def generate_values_no_machine(self):
-        """ Generate one new value per second, updating values and differences with terminal logging """
-        total_values = len(self.upper_panel.value_display.value_labels)
-
-        current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
-        difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
-        index = 0
-
-        while self.running:
-            # Get unit and reference for this index
-            try:
-                unit = self.upper_panel.value_display.labels_values["units"][index]
-                reference = self.upper_panel.value_display.labels_values["references"][index]
-            except IndexError:
-                unit = "mV"
-                reference = 0
-
-            # Log before
-            self.terminal.log(f"Executing: Measure {self.sidebar.selected_mode} at index {index} (ref: {reference} {unit})")
-
-            # Generate new value
-            new_value = round(random.uniform(0, 1000000000), 2)/1000000
-            current_values[index] = {"Value": new_value, "Label": unit}
-            # Compute difference and update
-            difference = round(random.uniform(-1000, 1000), 2)/1000
-            difference_values[index] = {"Value": difference, "Label": unit}
-
-            self.upper_panel.value_display.labels_values["diffMeas"][index] = difference
-
-            # Update display
-            self.upper_panel.value_display.update_values(current_values, difference_values)
-            self.log_measurement(
-                calibration_id=self.current_calibration_id,
-                set_value=reference,
-                calculated_value=new_value,
-                ref_set_diff=difference,
-                std=random.uniform(0.1, 0.5)  # Random fake std deviation (you can improve later)
-            )
-            if self.graph_enabled:
-                graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
-                                {"Value": random.uniform(0, 5), "Label": "A"},
-                                {"Value": random.uniform(0, 1000), "Label": "Ω"}]
-
-                self.graph.update_data(graph_values)
-
-            # Log result
-            self.terminal.log(f"Updated index {index}: {new_value} {unit}, Δ = {difference} {unit}")
-
-            index = (index + 1) % total_values
-            time.sleep(1)
-
-            # Pause after 10th value if in "2Ω" mode
-            if self.selected_mode == "2Ω" and index == 2 and not self.prompt_shown:
-                self.prompt_shown = True
-                self.running = False
-                self.after(100, self.show_pause_popup)  # Show popup in main thread
-                return  # Exit loop
 
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
