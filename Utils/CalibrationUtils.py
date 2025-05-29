@@ -58,7 +58,7 @@ class CalibrationUtils():
         self.current_values[idx] = {"Value": measurement, "Label": unit}
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
-
+        self.std_values[idx] = {"Value": std, "Label": unit}
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
         # Update display

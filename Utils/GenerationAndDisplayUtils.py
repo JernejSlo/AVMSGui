@@ -37,7 +37,7 @@ class GenerationAndDisplayUtils():
 
             new_value = round(random.uniform(0, 1000000000), 2) / 1000000
             difference = round(random.uniform(-1000, 1000), 2) / 1000
-
+            std_values = round(random.uniform(-1000, 1000), 2) / 1000
             current_values.append({"Value": new_value, "Label": unit})
             difference_values.append({"Value": difference, "Label": unit})
 
@@ -57,15 +57,15 @@ class GenerationAndDisplayUtils():
                 frequency=None
             )
 
-            self.upper_panel.value_display.update_values(current_values, difference_values)
+            self.upper_panel.value_display.update_values(current_values, difference_values,std_values)
             time.sleep(0.1)
 
-        if self.interrupt("Generation interrupted."):
-            return
+            if self.interrupt("Generation interrupted."):
+                return
 
-        if self.graph_enabled:
-            graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": 1}]
-            self.graph.update_data(graph_values)
+            if self.graph_enabled:
+                graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": len(self.graph.time_values)}]
+                self.graph.update_data(graph_values)
 
         if self.selected_mode == "2Ω" and not self.prompt_shown:
             self.prompt_shown = True

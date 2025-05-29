@@ -113,6 +113,7 @@ class GraphComponent(customtkinter.CTkFrame):
 
     def update_data(self, values):
         print("Showing for",values)
+        print("Currently", self.data_sets)
         """ Store new data points and update the graph """
         self.time_values.append(values[0]["Step"])
         for i, val in enumerate(values):
@@ -122,7 +123,7 @@ class GraphComponent(customtkinter.CTkFrame):
             if i < len(self.value_data_labels):
                 self.value_data_labels[i].configure(text=f"{value_str} {val['Label']}")"""
 
-    def update_graph(self, frame):
+    def update_graph(self,frame=None):
         """ Update the graph display """
         self.ax.clear()
         data = self.data_sets[self.selected_index]
