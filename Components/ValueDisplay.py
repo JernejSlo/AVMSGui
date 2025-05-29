@@ -256,7 +256,7 @@ class ValueDisplay(customtkinter.CTkFrame):
             col += 1 if single_mode_flags[i] else 2
         return col
 
-    def update_values(self, values, differences):
+    def update_values(self, values, differences, stds):
         self.vals = values
         self.diffs = differences
         precision = self.rounding_precision.get()
@@ -267,11 +267,12 @@ class ValueDisplay(customtkinter.CTkFrame):
                 if is_single:
                     val = values[value_i]
                     diff_val = differences[value_i]
+                    std_val = stds[value_i]
 
                     raw_val = val["Value"]
                     label = val["Label"]
                     diff = diff_val["Value"]
-                    std = val.get("StdDev", "--")
+                    std = std_val["Value"]
 
                     value_str = raw_val if isinstance(raw_val, str) else f"{float(raw_val):.{precision}f}"
                     diff_str = diff if isinstance(diff, str) else f"{float(diff):.{precision}f}"
