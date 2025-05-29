@@ -341,6 +341,7 @@ class CalibrationUtils():
             calculated_value FLOAT,
             ref_set_diff FLOAT,
             std FLOAT,
+            frequency FLOAT,
             timestamp DATETIME,
             FOREIGN KEY (calibration_id) REFERENCES calibrations(id)
         )
@@ -366,14 +367,14 @@ class CalibrationUtils():
         if self.conn:
             self.conn.close()
 
-    def log_measurement(self, calibration_id, set_value, calculated_value, ref_set_diff, std):
+    def log_measurement(self, calibration_id, set_value, calculated_value, ref_set_diff, std, frequency):
         cursor = self.conn.cursor()
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cursor.execute("""
-            INSERT INTO measurements (calibration_id, set_value, calculated_value, ref_set_diff, std, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (calibration_id, set_value, calculated_value, ref_set_diff, std, timestamp))
+            INSERT INTO measurements (calibration_id, set_value, calculated_value, ref_set_diff, std, frequency, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (calibration_id, set_value, calculated_value, ref_set_diff, std, frequency, timestamp))
 
         self.conn.commit()
         print(f"Measurement logged for calibration ID {calibration_id}.")

@@ -106,7 +106,7 @@ class DatabaseOverview(customtkinter.CTkFrame):
             widget.destroy()
 
         if results:
-            headers = ["Set Value", "Measured", "Δ (Diff)", "STD", "Timestamp"]
+            headers = ["Set Value", "Measured", "Δ (Diff)", "STD", "Frequency (Hz)", "Timestamp"]
             for idx, header in enumerate(headers):
                 customtkinter.CTkLabel(
                     self.scrollable_frame, text=header,
@@ -114,7 +114,7 @@ class DatabaseOverview(customtkinter.CTkFrame):
                 ).grid(row=0, column=idx, padx=10, pady=(0, 5), sticky="w")
 
             for row_idx, row in enumerate(results, start=1):
-                set_value, calculated_value, ref_set_diff, std, timestamp = row
+                set_value, calculated_value, ref_set_diff, std,frequency, timestamp = row
 
                 customtkinter.CTkLabel(self.scrollable_frame, text=f"{set_value}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=0, padx=10, pady=2, sticky="w")
@@ -124,8 +124,10 @@ class DatabaseOverview(customtkinter.CTkFrame):
                     row=row_idx, column=2, padx=10, pady=2, sticky="w")
                 customtkinter.CTkLabel(self.scrollable_frame, text=f"{std}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=3, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=timestamp, font=customtkinter.CTkFont(size=13)).grid(
+                customtkinter.CTkLabel(self.scrollable_frame, text=f"{frequency}", font=customtkinter.CTkFont(size=13)).grid(
                     row=row_idx, column=4, padx=10, pady=2, sticky="w")
+                customtkinter.CTkLabel(self.scrollable_frame, text=timestamp, font=customtkinter.CTkFont(size=13)).grid(
+                    row=row_idx, column=5, padx=10, pady=2, sticky="w")
         else:
             customtkinter.CTkLabel(
                 self.scrollable_frame,
