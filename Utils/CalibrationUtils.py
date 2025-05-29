@@ -20,7 +20,7 @@ class CalibrationUtils():
 
         self.current_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
         self.difference_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
-
+        self.std_values = [{"Value": "--", "Label": "mV"} for _ in range(total_values)]
 
         self.measParameters = {
             "numOfMeas": 5,
@@ -63,17 +63,12 @@ class CalibrationUtils():
         # Compute difference and update
         self.difference_values[idx] = {"Value": diff, "Label": unit}
 
-        self.std_values[idx] = {"Value": std, "Label": unit}
-
         self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
 
-
-        self.current_values[idx] = {"Value": measurement, "Label": unit}
-
-
-
         # Update display
-        self.upper_panel.value_display.update_values(self.current_values, self.difference_values[idx], self.std_values)
+        self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
+
+        self.terminal.log(f'{measurement}')
 
     def waitForSettled(self):
         SETTLED = 12

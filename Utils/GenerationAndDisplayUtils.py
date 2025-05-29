@@ -15,13 +15,13 @@ class GenerationAndDisplayUtils():
         if not self.running:
             return
 
-        total_values = len(self.upper_panel.value_display.value_labels)
+        total_values = len(self.upper_panel.value_display.labels_values["references"])
         current_values = []
         difference_values = []
 
         for index in range(total_values):
-            if self.interrupt("Generation interrupted."): return
-
+            if self.interrupt("Generation interrupted."):
+                return
 
             try:
                 unit = self.upper_panel.value_display.labels_values["units"][index]
@@ -57,27 +57,59 @@ class GenerationAndDisplayUtils():
                 frequency=None
             )
 
-            # Gradually update each value
             self.upper_panel.value_display.update_values(current_values, difference_values)
+            time.sleep(0.1)
 
-            time.sleep(0.1)  # Small delay for gradual update
-
-        if self.interrupt("Generation interrupted."): return
+        if self.interrupt("Generation interrupted."):
+            return
 
         if self.graph_enabled:
-            graph_values = [{"Value": random.uniform(0, 10), "Label": "V"},
-                            {"Value": random.uniform(0, 5), "Label": "A"},
-                            {"Value": random.uniform(0, 1000), "Label": "Ω"}]
+            graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": 1}]
             self.graph.update_data(graph_values)
 
         if self.selected_mode == "2Ω" and not self.prompt_shown:
             self.prompt_shown = True
             self.running = False
             self.after(100, self.show_pause_popup)
+
     def interrupt(self,message):
         if not self.running:
             self.terminal.log(message)
             return True
+
+    def log_all(self):
+        self.measParameters = {
+            "numOfMeas": 5,
+            "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
+            "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
+            "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
+            "measurements": [None, None, None, None, None, None, None, None, None, None, None],
+            "frequencies": ["100 Hz", "1 kHz", "10 kHz"],
+            "diffMeas": [None, None, None, None, None, None, None, None, None, None, None],
+            "stdVars": [None, None, None, None, None, None, None, None, None, None, None],
+            "linearRefs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "linearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "diffLinearMeas": [None, None, None, None, None, None, None, None, None, None],
+            "linearStdVars": [None, None, None, None, None, None, None, None, None, None],
+            "measType": "",
+            "dirType": ""
+        }
+        meas = self.measParameters
+        for i in range(len(meas["linearRefs"])):
+            freq = meas["frequencies"][i]
+            new_value = meas["measurements"][i]
+            stdVar = meas["stdVars"][i]
+            diffMeas = meas["diffMeas"][i]
+            ref = meas["references"][i]
+            self.log_measurement(
+                calibration_id=self.current_calibration_id,
+                set_value=ref,
+                calculated_value=new_value,
+                ref_set_diff=diffMeas,
+                std=stdVar,
+                frequency=None
+            )
+
     def get_calibration_values(self):
         """Run calibration once, log and update values. Falls back to fake values on error."""
         try:
@@ -99,12 +131,17 @@ class GenerationAndDisplayUtils():
             return
 
         # Simulate graph update (fake example)
+        self.log_all()
+
         if self.graph_enabled:
-            graph_values = [
-                {"Value": random.uniform(0, 10), "Label": "V"},
-                {"Value": random.uniform(0, 5), "Label": "A"},
-                {"Value": random.uniform(0, 1000), "Label": "Ω"}
-            ]
+            graph_values = []
+            for i in range(len(self.measParameters["linearRefs"])):
+                lref = self.measParameters["linearRefs"][i]
+                lmeas = self.measParameters["linearMeas"][i]
+                unit = self.measParameters["linearUnits"][i]
+                graph_values.append(
+                    {"Value": lmeas, "Label": unit, "Step": lref}
+                )
             self.graph.update_data(graph_values)
 
         self.running = False
