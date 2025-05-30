@@ -279,8 +279,9 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.database_overview.grid()
 
     def update_title(self, mode):
-        if not self.running:
 
+        if not self.running:
+            self.graph.update_mode(mode)
             self.changeMeasParam(mode)
             self.show_all_pages()
             """ Update title and show graph if needed """
