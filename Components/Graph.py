@@ -1,6 +1,9 @@
 import tkinter
+import traceback
+
 import customtkinter
 import numpy as np
+from colorama import Fore, Style
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -126,6 +129,7 @@ class GraphComponent(customtkinter.CTkFrame):
 
 
     def update_mode(self,mode):
+
         self.selected_mode = mode
 
     def update_graph(self, frame=None):
@@ -144,15 +148,43 @@ class GraphComponent(customtkinter.CTkFrame):
         # Mode-dependent line
         try:
             if self.selected_mode == "ACV":
+
+                self.ax.set_ylim(10,10)  # Adjust these values as needed
                 # Flat line at 10
-                x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
-                y_vals = np.full_like(x_vals, 10)
-                self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+
+                if len(time) == 0:
+                    x_vals = np.arange(len(time)) if time else np.arange(5)
+                    y_vals = np.full_like(x_vals, 10)
+                    self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+
+                else:
+                    val = time[0]
+
+                    x_vals = np.arange(len(time)) if not isinstance(val, (int, float)) else np.array(time)
+                    y_vals = np.full_like(x_vals, 10)
+                    self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+
+
             elif self.selected_mode == "DCV":
-                # Linear 1:1 line
-                x_vals = np.arange(1, len(time) + 1)
-                y_vals = x_vals  # Diagonal line (1,1), (2,2), ...
-                self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
+
+                self.ax.set_ylim(0, 10)  # Adjust Y-axis to show the full 1:1 line clearly at the start
+
+                if len(time) == 0:
+
+                    x_vals = np.arange(0, 10)  # Fallback to (1,1), (2,2), ..., (5,5)
+
+                    y_vals = x_vals
+
+                    self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
+
+                else:
+
+                    x_vals = np.arange(1, len(time) + 1)
+
+                    y_vals = x_vals
+
+                    self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
+
             else:
                 # Fit line for other modes
                 if len(time) >= 2:
@@ -164,6 +196,13 @@ class GraphComponent(customtkinter.CTkFrame):
                                  label="Fitted Line")
         except Exception as e:
             print("Graph line drawing failed:", e)
+            print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
+            print(Fore.YELLOW + Style.BRIGHT + "Exception message: " + str(e))
+            print(Fore.CYAN + Style.BRIGHT + "Traceback:")
+            traceback_lines = traceback.format_exception(type(e), e, e.__traceback__)
+            for line in traceback_lines:
+                print(Fore.CYAN + line, end='')
+
 
         self.ax.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5)
         self.ax.legend()
