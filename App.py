@@ -372,17 +372,33 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         entry2.pack(pady=10)
 
         def confirm_inputs():
-            self.hpadress = entry1.get()
-            self.flukeadress = entry2.get()
-            popup.destroy()
+            hp_val = entry1.get().strip()
+            fluke_val = entry2.get().strip()
+
+            valid = True
+
+            if hp_val:
+                if hp_val.isdigit():
+                    self.hpadress = f"GPIB0::{hp_val}::INSTR"
+                else:
+                    entry1.configure(placeholder_text="Enter a number!", text="")
+                    valid = False
+
+            if fluke_val:
+                if fluke_val.isdigit():
+                    self.flukeadress = f"GPIB0::{fluke_val}::INSTR"
+                else:
+                    entry2.configure(placeholder_text="Enter a number!", text="")
+                    valid = False
+
+            if valid:
+                popup.destroy()
 
         btn_confirm = customtkinter.CTkButton(popup, text="Confirm", command=confirm_inputs)
         btn_confirm.pack(pady=10)
 
         if show_default:
             def use_default():
-                self.hpadress = "GPIB0::22::INSTR"  # Example default
-                self.flukeadress = "GPIB0::14::INSTR"  # Example default
                 popup.destroy()
 
             btn_default = customtkinter.CTkButton(popup, text="Use Default", command=use_default)
