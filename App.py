@@ -124,6 +124,9 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.prompt_shown = False
 
         self.upper_panel.content_box.grid_remove()
+        self.upper_panel.content_box.grid_remove()
+
+        self.show_input_popup()
 
     def get_pairs(self):
         total_refs = len(self.measParameters["references"])
@@ -347,6 +350,43 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
+
+    def show_input_popup(self, message="Enter addresses for HP 34401A and FLUKE 5522A or use default:", show_default=False):
+        self.update_idletasks()
+        m_x = self.winfo_width() / 2
+        m_y = self.winfo_height() / 2
+
+        popup = customtkinter.CTkToplevel(self)
+        popup.title("Enter Addresses")
+        popup.geometry(f"600x300+{int(m_x - 250)}+{int(m_y - 150)}")
+        popup.transient(self)
+        popup.grab_set()
+
+        label = customtkinter.CTkLabel(popup, text=message, text_color="white",)
+        label.pack(pady=(20, 10))
+
+        entry1 = customtkinter.CTkEntry(popup, placeholder_text="HP 34401A address")
+        entry1.pack(pady=10)
+
+        entry2 = customtkinter.CTkEntry(popup, placeholder_text="FLUKE 5522A address")
+        entry2.pack(pady=10)
+
+        def confirm_inputs():
+            self.hpadress = entry1.get()
+            self.flukeadress = entry2.get()
+            popup.destroy()
+
+        btn_confirm = customtkinter.CTkButton(popup, text="Confirm", command=confirm_inputs)
+        btn_confirm.pack(pady=10)
+
+        if show_default:
+            def use_default():
+                self.hpadress = "GPIB0::22::INSTR"  # Example default
+                self.flukeadress = "GPIB0::14::INSTR"  # Example default
+                popup.destroy()
+
+            btn_default = customtkinter.CTkButton(popup, text="Use Default", command=use_default)
+            btn_default.pack(pady=(0, 10))
 
     def show_pause_popup(self,message="To continue calibration connect with 4 leads system (switch from 2 leads to 4).\n "
                                                      ):
