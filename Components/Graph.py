@@ -139,11 +139,21 @@ class GraphComponent(customtkinter.CTkFrame):
 
         # Mode-dependent line
         try:
+            print("making graph for", self.selected_mode)
             if self.selected_mode == "ACV":
-                # Flat line at 10
-                x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
+                x_vals_full = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
+                start_x = 10
+
+                # Filter to start the flat line from x=10 onward
+                if isinstance(x_vals_full[0], (int, float)):
+                    mask = x_vals_full >= start_x
+                else:
+                    mask = np.arange(len(x_vals_full)) >= start_x  # fallback if x_vals are not numeric
+
+                x_vals = x_vals_full[mask]
                 y_vals = np.full_like(x_vals, 10)
                 self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+
             elif self.selected_mode == "DCV":
                 # Linear 1:1 line
                 x_vals = np.arange(1, len(time) + 1)

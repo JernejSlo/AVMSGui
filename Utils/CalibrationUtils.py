@@ -210,6 +210,7 @@ class CalibrationUtils():
         # prvi del kalibracije
 
         for MeasNum in range(len(self.measParameters["references"])):
+            break
             # postavitev frekvence na nič pri meritvah DC veličin
             if self.dirType != ":AC" and self.measType != 'FREQuency' and MeasNum == 0:
                 F5522A_string = "OUT 0 Hz"
@@ -313,6 +314,11 @@ class CalibrationUtils():
                 self.F5522A.write(F5522A_string)
 
                 self.terminal.log("")
+                lref = self.measParameters["linearRefs"][MeasNum]
+                lmeas = self.measParameters["linearMeas"][MeasNum]
+                unit = self.measParameters["linearUnits"][MeasNum]
+                self.graph.update_data([{"Value": lmeas, "Label": unit, "Step": lref}])
+
 
 
 

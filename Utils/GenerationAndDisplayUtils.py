@@ -160,13 +160,6 @@ class GenerationAndDisplayUtils():
         # Simulate graph update (fake example)
         self.log_all()
 
-        if self.graph_enabled:
-            graph_values = []
-            for i in range(len(self.measParameters["linearRefs"])):
-                print(self.measParameters)
-                lref = self.measParameters["linearRefs"][i]
-                lmeas = self.measParameters["linearMeas"][i]
-                unit = self.measParameters["linearUnits"][i]
-                self.graph.update_data([{"Value": lmeas, "Label": unit, "Step": lref}])
+
 
         self.running = False
