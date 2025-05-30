@@ -359,7 +359,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         popup = customtkinter.CTkToplevel(self)
         popup.title("Enter Addresses")
-        popup.geometry(f"600x300+{int(m_x - 250)}+{int(m_y - 150)}")
+        popup.geometry(f"700x300+{int(m_x - 350)}+{int(m_y - 150)}")
         popup.transient(self)
         popup.grab_set()
 
