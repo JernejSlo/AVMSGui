@@ -352,7 +352,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
 
-    def show_input_popup(self, message="Enter addresses for HP 34401A and FLUKE 5522A or use default:", show_default=False):
+    def show_input_popup(self, message="Enter addresses for HP 34401A and FLUKE 5522A or use default:", show_default=True):
         self.update_idletasks()
         m_x = self.winfo_width() / 2
         m_y = self.winfo_height() / 2
