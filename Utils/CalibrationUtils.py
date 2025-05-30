@@ -10,8 +10,8 @@ class CalibrationUtils():
         self.db_name = db_name
         self.conn = None
         self.ensure_connection()
-
-
+        self.hpadress = 22
+        self.flukeadress = 4
         # actual calibration stuff
         self.rm = pyvisa.ResourceManager()
 
@@ -100,9 +100,12 @@ class CalibrationUtils():
         return MeasAverage, stdVar
 
     def calibrate(self):
+        try:
+            self.HP34401A = self.rm.open_resource(f'GPIB0::{self.hpadress}::INSTR')
+            self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
+        except:
+            self.show_input_popup(self,message="Enter addresses for HP 34401A and FLUKE 5522A, default addresses broken:", show_default=False)
 
-        self.HP34401A = self.rm.open_resource('GPIB0::22::INSTR')
-        self.F5522A = self.rm.open_resource('GPIB0::4::INSTR')
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
 

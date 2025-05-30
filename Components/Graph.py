@@ -107,6 +107,7 @@ class GraphComponent(customtkinter.CTkFrame):
 
 
     def update_mode(self,mode):
+        self.time_values = []
         self.selected_mode = mode
 
     def update_graph(self, frame=None):
