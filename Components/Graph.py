@@ -60,7 +60,7 @@ class GraphComponent(customtkinter.CTkFrame):
         self.actual_values = []
         self.time_values = []
         self.data_sets = [self.actual_values]
-        self.labels = ["Values"]
+        self.labels = ["Measured values"]
         self.selected_index = 0
 
         self.max_point_options = [10, 25, 50, 100, 200, None]
@@ -150,43 +150,21 @@ class GraphComponent(customtkinter.CTkFrame):
                 self.ax.set_xlabel("Set frequency [Hz]")
                 self.ax.set_ylabel("Measured voltage [V]")
 
-                self.ax.set_ylim(10,10)  # Adjust these values as needed
+
                 # Flat line at 10
 
-                if len(time) == 0:
-                    x_vals = np.arange(len(time)) if time else np.arange(5)
-                    y_vals = np.full_like(x_vals, 10)
-                    self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
-
-                else:
-                    val = time[0]
-
-                    x_vals = np.arange(len(time)) if not isinstance(val, (int, float)) else np.array(time)
-                    y_vals = np.full_like(x_vals, 10)
-                    self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
-
+                x_vals = np.arange(10,100)
+                y_vals = np.full_like(x_vals, 10)
+                self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Reference at 10 V")
 
             elif self.selected_mode == "DCV":
                 self.ax.set_xlabel("Set voltage [V]")
                 self.ax.set_ylabel("Mesured voltage [V]")
+                x_vals = np.arange(0, 10)  # Fallback to (1,1), (2,2), ..., (5,5)
 
-                self.ax.set_ylim(0, 10)  # Adjust Y-axis to show the full 1:1 line clearly at the start
+                y_vals = x_vals
 
-                if len(time) == 0:
-
-                    x_vals = np.arange(0, 10)  # Fallback to (1,1), (2,2), ..., (5,5)
-
-                    y_vals = x_vals
-
-                    self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
-
-                else:
-
-                    x_vals = np.arange(1, len(time) + 1)
-
-                    y_vals = x_vals
-
-                    self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
+                self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="Linear reference")
 
             else:
                 # Fit line for other modes
