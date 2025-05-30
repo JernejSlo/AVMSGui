@@ -381,14 +381,14 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
             if hp_val:
                 if hp_val.isdigit():
-                    self.hpadress = f"GPIB0::{hp_val}::INSTR"
+                    self.hpadress = hp_val
                 else:
                     entry1.configure(placeholder_text="Enter a number!", text="")
                     valid = False
 
             if fluke_val:
                 if fluke_val.isdigit():
-                    self.flukeadress = f"GPIB0::{fluke_val}::INSTR"
+                    self.flukeadress = fluke_val
                 else:
                     entry2.configure(placeholder_text="Enter a number!", text="")
                     valid = False
