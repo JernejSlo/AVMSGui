@@ -105,10 +105,19 @@ class CalibrationUtils():
     def calibrate(self):
         try:
             self.HP34401A = self.rm.open_resource(f'GPIB0::{self.hpadress}::INSTR')
-            self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
-
             self.HP34401A.timeout = 2500
+
+            # Try a simple query to test connection
+            idn_hp = self.HP34401A.query("*IDN?")
+            print("HP 34401A connected:", idn_hp.strip())
+
+            self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
             self.F5522A.timeout = 2500
+
+            # Try a simple query to test connection
+            idn_fluke = self.F5522A.query("*IDN?")
+            print("FLUKE 5522A connected:", idn_fluke.strip())
+
         except:
             self.stop_action()
             self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are broken or machine isn't turned on):", show_default=self.custom_address_chosen)
