@@ -145,33 +145,19 @@ class GraphComponent(customtkinter.CTkFrame):
         try:
             print("making graph for", self.selected_mode)
             if self.selected_mode == "ACV":
-                x_vals_full = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
-                start_x = 10
-
-                # Filter to start the flat line from x=10 onward
-                if isinstance(x_vals_full[0], (int, float)):
-                    mask = x_vals_full >= start_x
-                else:
-                    mask = np.arange(len(x_vals_full)) >= start_x  # fallback if x_vals are not numeric
-
-                x_vals = x_vals_full[mask]
+                self.ax.set_xlabel("Set frequency [Hz]")
+                self.ax.set_ylabel("Measured voltage [V]")
+                x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
                 y_vals = np.full_like(x_vals, 10)
-                self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+                self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Reference at 10 V")
 
             elif self.selected_mode == "DCV":
                 # Linear 1:1 line
-                x_vals = np.arange(1, len(time) + 1)
+                self.ax.set_xlabel("Set voltage [V]")
+                self.ax.set_ylabel("Mesured voltage [V]")
+                x_vals = np.arange(0, len(time))
                 y_vals = x_vals  # Diagonal line (1,1), (2,2), ...
-                self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
-            else:
-                # Fit line for other modes
-                if len(time) >= 2:
-                    x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
-                    y_vals = np.array(data)
-                    coeffs = np.polyfit(x_vals, y_vals, deg=1)
-                    fit_line = np.poly1d(coeffs)
-                    self.ax.plot(x_vals, fit_line(x_vals), color="lightgray", linestyle="--", linewidth=1.5,
-                                 label="Fitted Line")
+                self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="Linear line")
         except Exception as e:
             print("Graph line drawing failed:", e)
 
