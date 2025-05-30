@@ -137,16 +137,26 @@ class DatabaseOverview(customtkinter.CTkFrame):
 
             for row_idx, row in enumerate(combined_results, start=1):
                 set_value, calculated_value, ref_set_diff, std, unit, frequency, timestamp, row_type = row
-
-                values = [
-                    f"{set_value} {unit}",
-                    f"{calculated_value} {unit}",
-                    f"{ref_set_diff} {unit}",
-                    f"{std} {unit}",
-                    frequency or "/",
-                    timestamp,
-                    row_type
-                ]
+                if row_type == "measurement":
+                    values = [
+                        f"{set_value} {unit}",
+                        f"{calculated_value} {unit}",
+                        f"{ref_set_diff} {unit}",
+                        f"{std} {unit}",
+                        frequency or "/",
+                        timestamp,
+                        row_type
+                    ]
+                else:
+                    values = [
+                        f"{set_value} {unit}",
+                        f"{calculated_value} V",
+                        f"{ref_set_diff} V",
+                        f"{std} V",
+                        frequency or "/",
+                        timestamp,
+                        row_type
+                    ]
 
                 for col_idx, val in enumerate(values):
                     customtkinter.CTkLabel(

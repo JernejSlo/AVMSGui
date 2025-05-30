@@ -109,7 +109,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 
-        CalibrationUtils.__init__(self,"./Utils/calibration.db")
+        CalibrationUtils.__init__(self,"./calibration.db")
 
         self.database_overview = DatabaseOverview(self, self.show_calibration_view)
         self.database_overview.grid(row=0, column=1, rowspan=3, padx=20, pady=20, sticky="nsew")
@@ -286,7 +286,10 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         if not self.running:
             self.graph.update_mode(mode)
-            self.graph.update_graph()
+            try:
+                self.graph.update_graph()
+            except:
+                print("cant update graph")
             self.changeMeasParam(mode)
             self.show_all_pages()
             """ Update title and show graph if needed """
@@ -330,6 +333,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def start_action(self):
         """ Start generating random values """
         if not self.running:
+            self.graph.clear_graph()
             self.clear_values()
             self.running = True
 
@@ -341,9 +345,11 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
             self.upper_panel.controls.stop_button.configure(state="enabled",fg_color="red")
         self.upper_panel.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
 
-    def stop_action(self):
+    def stop_action(self,clear_graph=True):
         """ Stop generating values """
         self.running = False
+        if clear_graph:
+            self.graph.clear_graph()
         self.terminal.log("Stopped.")
         self.database_overview.populate_dropdown()
         self.upper_panel.controls.stop_button.configure(state="disabled", fg_color="#B0B0B0")

@@ -107,8 +107,25 @@ class GraphComponent(customtkinter.CTkFrame):
 
 
     def update_mode(self,mode):
-        self.time_values = []
+        self.clear_graph()
         self.selected_mode = mode
+
+    def clear_graph(self):
+        """Clear all graph data and reset the display."""
+        # Clear stored data
+        self.time_values = []
+        self.actual_values = []
+        self.data_sets = [self.actual_values]
+
+        # Clear plot
+        self.ax.clear()
+
+        # Optionally reset axis labels
+        self.ax.set_xlabel("")
+        self.ax.set_ylabel("")
+
+        # Redraw the empty canvas
+        self.canvas.draw()
 
     def update_graph(self, frame=None):
         """ Update the graph display with points and a fitted or fixed line depending on mode """

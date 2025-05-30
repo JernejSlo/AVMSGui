@@ -29,7 +29,7 @@ class CalibrationUtils():
         self.measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
-            "frequencies": [element for element in ["100 Hz", "1 kHz", "10 kHz"] for _ in range(len(self.measParameters["references"]))],
+            "frequencies":  ["100 Hz", "1 kHz", "10 kHz"] * (len(self.measParameters["references"])),
             "unique_frequencies": ["100 Hz", "1 kHz", "10 kHz"],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "measurements": [None] * len(self.measParameters["references"]),
@@ -69,10 +69,6 @@ class CalibrationUtils():
 
         self.std_values[idx] = {"Value": std, "Label": unit}
 
-        self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
-
-        self.upper_panel.value_display.labels_values["stdDevs"][idx] = std
-        # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
 
     def waitForSettled(self):
@@ -106,27 +102,31 @@ class CalibrationUtils():
     def calibrate(self):
         try:
             self.HP34401A = self.rm.open_resource(f'GPIB0::{self.hpadress}::INSTR')
-            self.HP34401A.timeout = 2500
 
             # Try a simple query to test connection
             idn_hp = self.HP34401A.query("*IDN?")
-            print("HP 34401A connected:", idn_hp.strip())
+            self.terminal.log("HP 34401A connected.")
 
             self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
             self.F5522A.timeout = 2500
 
             # Try a simple query to test connection
             idn_fluke = self.F5522A.query("*IDN?")
+
+            self.terminal.log("FLUKE 5522A connected.")
             print("FLUKE 5522A connected:", idn_fluke.strip())
+            self.terminal.log("Connected successfully")
 
         except:
+            self.terminal.log("Cannot connect devices.")
             self.stop_action()
-            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are broken or machine isn't turned on):", show_default=self.custom_address_chosen)
+            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are incorrect or devices aren't turned on):", show_default=self.custom_address_chosen)
+            return
 
-
-
+        self.HP34401A.timeout = 5000
+        self.F5522A.timeout = 5000
         self.measProcess()
-        self.stop_action()
+        self.stop_action(clear_graph=False)
 
     def changeMeasParam(self,typeOfMeas: str):
 
@@ -149,6 +149,7 @@ class CalibrationUtils():
                 self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(unique_freqs)]
                 self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(unique_freqs)]
                 self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(unique_freqs)]
+                self.measParameters["frequencies"] =  ["100 Hz", "1 kHz", "10 kHz"] * (len(self.measParameters["references"]))
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -177,6 +178,7 @@ class CalibrationUtils():
                 self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(unique_freqs)]
                 self.measParameters["range"] = [element for element in [1, 3] for _ in range(unique_freqs)]
                 self.measParameters["units"] = [element for element in ["A", "A"] for _ in range(unique_freqs)]
+                self.measParameters["frequencies"] = ["100 Hz", "1 kHz", "10 kHz"] * (len(self.measParameters["references"]))
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -208,7 +210,8 @@ class CalibrationUtils():
 
             case _: # default
                 pass
-
+        print(self.measParameters["frequencies"])
+        print(self.measParameters["references"])
         for i in range(len(self.measParameters["measurements"])):
             self.log_everything(i)
 
@@ -229,7 +232,6 @@ class CalibrationUtils():
         # prvi del kalibracije
 
         for MeasNum in range(len(self.measParameters["references"])):
-            break
             # postavitev frekvence na nič pri meritvah DC veličin
             if self.dirType != ":AC" and self.measType != 'FREQuency' and MeasNum == 0:
                 F5522A_string = "OUT 0 Hz"
@@ -303,14 +305,9 @@ class CalibrationUtils():
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
                 if self.dirType == ":AC":
-                    self.measType = "FREQuency"
-                    self.range = ""
                     F5522A_string = "OUT 10 V"
                     self.terminal.log(f'IN F5522A: {F5522A_string}')
                     self.F5522A.write(F5522A_string)
-                if self.dirType == ":DC":
-                    self.measType = "VOLTage"
-                    self.range = 10
 
                 # konfiguracija referenčne vrednosti na kalibratorju F5522A
                 F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {self.measParameters['linearUnits'][MeasNum]}"
@@ -330,6 +327,7 @@ class CalibrationUtils():
                 HP34401A_string = f"MEASure:{self.measType}{self.dirType}? 10"
                 [MeasAverage, stdVar] = self.measurement(self.measParameters["numOfMeas"], measRange = 10)
                 self.measParameters["linearMeas"][MeasNum] = MeasAverage
+                self.measParameters["diffLinearMeas"][MeasNum] = self.measParameters["linearRefs"][MeasNum] - MeasAverage
                 self.measParameters["linearStdVars"][MeasNum] = stdVar
 
                 # izklop referenčne vrednosti na kalibratorju F5522A

@@ -41,7 +41,16 @@ class Sidebar(customtkinter.CTkFrame):
         self.clear_button.grid(row=row_index, column=0, padx=20, pady=(10, 10))
         row_index += 1
 
-        # UI Scaling Label
+        # Overview Section
+        self.overview_label = customtkinter.CTkLabel(self, text="Past Calibrations:", anchor="w")
+        self.overview_label.grid(row=row_index, column=0, padx=20, pady=(10, 0))
+        row_index += 1
+
+        self.overview_button = customtkinter.CTkButton(self, text="Overview", command=overview_callback)
+        self.overview_button.grid(row=row_index, column=0, padx=20, pady=(10, 10))
+        row_index += 1
+
+        """# UI Scaling Label
         self.scaling_label = customtkinter.CTkLabel(self, text="UI Scaling:", anchor="w")
         self.scaling_label.grid(row=row_index, column=0, padx=20, pady=(10, 0))
         row_index += 1
@@ -56,20 +65,13 @@ class Sidebar(customtkinter.CTkFrame):
         )
 
         self.scaling_menu.grid(row=row_index, column=0, padx=20, pady=(5, 20))
-        row_index += 1
+        row_index += 1"""
 
-        # Overview Section
-        self.overview_label = customtkinter.CTkLabel(self, text="Past Calibrations:", anchor="w")
-        self.overview_label.grid(row=row_index, column=0, padx=20, pady=(10, 0))
-        row_index += 1
 
-        self.overview_button = customtkinter.CTkButton(self, text="Overview", command=overview_callback)
-        self.overview_button.grid(row=row_index, column=0, padx=20, pady=(10, 10))
-        row_index += 1
 
         # Defaults
         self.selected_mode = ""
-        self.scaling_menu.set("100%")
+        #self.scaling_menu.set("100%")
 
     def set_active_mode(self, mode):
         # Reset previous button to theme default

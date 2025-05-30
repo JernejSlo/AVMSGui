@@ -101,6 +101,7 @@ class GenerationAndDisplayUtils():
 
     def log_all(self):
         meas = self.measParameters
+        print("ahsvkdjasdj,mahv,mnahvskj,\n\n")
         print(meas)
         for i in range(len(meas["measurements"])):
             new_value = meas["measurements"][i]
@@ -128,7 +129,7 @@ class GenerationAndDisplayUtils():
                     calibration_id = self.current_calibration_id
                     set_value = meas["linearRefs"][i]
                     calculated_value = meas["linearMeas"][i]
-                    ref_set_diff =meas["diffLinearMeas"][i]
+                    ref_set_diff = meas["diffLinearMeas"][i]
                     std = meas["linearStdVars"][i]
                     unit = meas["linearUnits"][i]
                     self.log_linear_refs(
@@ -141,6 +142,9 @@ class GenerationAndDisplayUtils():
         """Run calibration once, log and update values. Falls back to fake values on error."""
         try:
             self.calibrate()  # Should generate all values in one go
+
+            # Simulate graph update (fake example)
+            self.log_all()
         except Exception as e:
             if not self.skip_fake_version:
                 print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
@@ -157,8 +161,6 @@ class GenerationAndDisplayUtils():
                 raise e
             return
 
-        # Simulate graph update (fake example)
-        self.log_all()
 
 
 
