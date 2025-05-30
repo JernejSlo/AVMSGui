@@ -95,12 +95,10 @@ class CalibrationUtils():
         # izračun povprečne vrednosti meritev
         MeasAverage = sum(MeasArray) / numOfMeas
 
-        # izračun standardne deviacije meritev
+        ## izračun standardne deviacije meritev
         stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1)) ** (1 / 2)
-
-
-
         return MeasAverage, stdVar
+
 
     def calibrate(self):
         try:
