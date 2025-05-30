@@ -128,9 +128,11 @@ class CalibrationUtils():
                 pass
 
             case 'ACV':
-                self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(len(self.measParameters["frequencies"]))]
+                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
+
+                self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(unique_freqs)]
+                self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(unique_freqs)]
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -155,9 +157,11 @@ class CalibrationUtils():
                 pass
 
             case 'ACI':
-                self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["range"] = [element for element in [1, 3] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["range"] = [element for element in ["A", "A"] for _ in range(len(self.measParameters["frequencies"]))]
+
+                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
+                self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in [1, 3] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in ["A", "A"] for _ in range(unique_freqs)]
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
