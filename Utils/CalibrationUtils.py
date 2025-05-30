@@ -99,6 +99,8 @@ class CalibrationUtils():
         # izračun standardne deviacije meritev
         stdVar = (sum((Meas - MeasAverage) ** 2 for Meas in MeasArray) / (numOfMeas - 1)) ** (1 / 2)
 
+
+
         return MeasAverage, stdVar
 
     def calibrate(self):
@@ -301,9 +303,14 @@ class CalibrationUtils():
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
                 if self.dirType == ":AC":
+                    self.measType = "FREQuency"
+                    self.range = ""
                     F5522A_string = "OUT 10 V"
                     self.terminal.log(f'IN F5522A: {F5522A_string}')
                     self.F5522A.write(F5522A_string)
+                if self.dirType == ":DC":
+                    self.measType = "VOLTage"
+                    self.range = 10
 
                 # konfiguracija referenčne vrednosti na kalibratorju F5522A
                 F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {self.measParameters['linearUnits'][MeasNum]}"
