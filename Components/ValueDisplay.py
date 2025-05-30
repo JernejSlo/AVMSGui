@@ -27,14 +27,6 @@ class ValueDisplay(customtkinter.CTkFrame):
         label_value_size = 13
         padx = 10
 
-        self.labels_values = {
-            "references": [0, 0.1, -0.1, 1, -1, 2, -2, 3, -3],
-            "units": ["V"] * 9,
-            "measurements": ["--"] * 9,
-            "diffMeas": ["--"] * 9,
-            "stdDevs": ["--"] * 9
-        }
-
         self.headers = []
         self.value_labels = []
         self.diff_labels = []

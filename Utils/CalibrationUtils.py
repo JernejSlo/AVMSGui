@@ -28,7 +28,8 @@ class CalibrationUtils():
         self.measParameters = {
             "references": [0, 100, -100, 1, -1, 10, -10, 100, -100, 1000, -1000],
             "range": [0.1, 0.1, 0.1, 1, 1, 10, 10, 100, 100, 1000, 1000],
-            "frequencies":  ["100 Hz", "1 kHz", "10 kHz"],
+            "frequencies": [element for element in ["100 Hz", "1 kHz", "10 kHz"] for _ in range(len(self.measParameters["references"]))],
+            "unique_frequencies": ["100 Hz", "1 kHz", "10 kHz"],
             "units": ["mV", "mV", "mV", "V", "V", "V", "V", "V", "V", "V", "V"],
             "measurements": [None] * len(self.measParameters["references"]),
             "diffMeas": [None] * len(self.measParameters["references"]),
@@ -67,9 +68,6 @@ class CalibrationUtils():
 
         self.std_values[idx] = {"Value": std, "Label": unit}
 
-        self.upper_panel.value_display.labels_values["diffMeas"][idx] = diff
-
-        self.upper_panel.value_display.labels_values["stdDevs"][idx] = std
         # Update display
         self.upper_panel.value_display.update_values(self.current_values, self.difference_values, self.std_values)
 
@@ -128,8 +126,7 @@ class CalibrationUtils():
                 pass
 
             case 'ACV':
-                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
-
+                unique_freqs = len(self.measParameters["unique_frequencies"])
                 self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(unique_freqs)]
                 self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(unique_freqs)]
                 self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(unique_freqs)]
@@ -157,14 +154,10 @@ class CalibrationUtils():
                 pass
 
             case 'ACI':
-                self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["range"] = [element for element in [1, 3] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["units"] = [element for element in ["A", "A"] for _ in range(len(self.measParameters["frequencies"]))]
-
-                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
+                unique_freqs = len(self.measParameters["unique_frequencies"])
                 self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(unique_freqs)]
                 self.measParameters["range"] = [element for element in [1, 3] for _ in range(unique_freqs)]
-                self.measParameters["range"] = [element for element in ["A", "A"] for _ in range(unique_freqs)]
+                self.measParameters["units"] = [element for element in ["A", "A"] for _ in range(unique_freqs)]
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -197,6 +190,10 @@ class CalibrationUtils():
             case _: # default
                 pass
 
+        for i in range(len(self.measParameters["measurements"])):
+            self.log_everything(i)
+
+
     def interrupt_calib(self, message):
         if not self.running:
             self.terminal.log(message)
@@ -208,7 +205,8 @@ class CalibrationUtils():
         self.measType = self.measParameters['measType']
         self.dirType = self.measParameters['dirType']
         self.freqNum = 0
-        self.frequency = self.measParameters["frequencies"][self.freqNum]
+
+        self.frequency = self.measParameters["unique_frequencies"][self.freqNum]
         # prvi del kalibracije
 
         for MeasNum in range(len(self.measParameters["references"])):
@@ -220,11 +218,11 @@ class CalibrationUtils():
 
             # postavitev referenčne napetosti na 1 V pri meritvah frekvence
             if self.dirType == ":AC":
-                self.frequency = self.measParameters["frequencies"][self.freqNum]
+                self.frequency = self.measParameters["unique_frequencies"][self.freqNum]
                 F5522A_string = f"OUT {self.frequency}"
                 self.terminal.log(f'IN F5522A: {F5522A_string}')
                 self.F5522A.write(F5522A_string)
-                self.freqNum = (self.freqNum + 1) % len(self.measParameters["frequencies"])
+                self.freqNum = (self.freqNum + 1) % len(self.measParameters["unique_frequencies"])
 
             # postavitev na dvožični način merjenja upornosti
             if self.measType == 'FRESistance' and MeasNum == 3:
@@ -285,14 +283,9 @@ class CalibrationUtils():
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
                 if self.dirType == ":AC":
-                    self.measType = "FREQuency"
-                    self.range = ""
                     F5522A_string = "OUT 10 V"
                     self.terminal.log(f'IN F5522A: {F5522A_string}')
                     self.F5522A.write(F5522A_string)
-                if self.dirType == ":DC":
-                    self.measType = "VOLTage"
-                    self.range = 10
 
                 # konfiguracija referenčne vrednosti na kalibratorju F5522A
                 F5522A_string = f"{'OUT'} {str(self.measParameters['linearRefs'][MeasNum])} {self.measParameters['linearUnits'][MeasNum]}"
