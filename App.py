@@ -325,9 +325,9 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
 
-    def show_pause_popup(self):
+    def show_pause_popup(self,message="Change measurement setup"):
         popup = customtkinter.CTkToplevel(self)
-        popup.title("Change measurement setup")
+        popup.title(message)
         popup.geometry("500x150")
         popup.transient(self)
         popup.grab_set()
