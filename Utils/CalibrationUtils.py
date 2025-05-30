@@ -12,6 +12,7 @@ class CalibrationUtils():
         self.ensure_connection()
         self.hpadress = 22
         self.flukeadress = 4
+        self.custom_address_chosen = False
         # actual calibration stuff
         self.rm = pyvisa.ResourceManager()
 
@@ -105,9 +106,7 @@ class CalibrationUtils():
             self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
         except:
             self.stop_action()
-            def_ = self.custom_address_chosen
-            use_default = not def_
-            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are incorrect or machine isn't turned on):", show_default=use_default)
+            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are broken or machine isn't turned on):", show_default=self.custom_address_chosen)
 
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
