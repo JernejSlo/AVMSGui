@@ -87,8 +87,8 @@ class GenerationAndDisplayUtils():
 
             time.sleep(0.1)
 
-            if self.interrupt("Generation interrupted."):
-                return
+        if self.interrupt("Generation interrupted."):
+            return
 
 
 
@@ -124,11 +124,11 @@ class GenerationAndDisplayUtils():
             )
         try:
             for i in range(len(meas["linearRefs"])):
-                if self.selected_mode in ["DCV", "ACV"]:
+                if self.selected_mode in ["DCV","ACV"]:
                     calibration_id = self.current_calibration_id
                     set_value = meas["linearRefs"][i]
                     calculated_value = meas["linearMeas"][i]
-                    ref_set_diff = meas["diffLinearMeas"][i]
+                    ref_set_diff =meas["diffLinearMeas"][i]
                     std = meas["linearStdVars"][i]
                     unit = meas["linearUnits"][i]
                     self.log_linear_refs(
@@ -137,7 +137,6 @@ class GenerationAndDisplayUtils():
         except Exception as e:
             print("Couldn't log linearity")
             print(e)
-
     def get_calibration_values(self):
         """Run calibration once, log and update values. Falls back to fake values on error."""
         try:
@@ -161,16 +160,13 @@ class GenerationAndDisplayUtils():
         # Simulate graph update (fake example)
         self.log_all()
 
-        if self.selected_mode in ["ACV", "DCV"]:
+        if self.graph_enabled:
             graph_values = []
             for i in range(len(self.measParameters["linearRefs"])):
+                print(self.measParameters)
                 lref = self.measParameters["linearRefs"][i]
                 lmeas = self.measParameters["linearMeas"][i]
                 unit = self.measParameters["linearUnits"][i]
-                graph_values.append(
-                    {"Value": lmeas, "Label": unit, "Step": lref}
-                )
-
-            self.graph.update_data(graph_values)
+                self.graph.update_data([{"Value": lmeas, "Label": unit, "Step": lref}])
 
         self.running = False
