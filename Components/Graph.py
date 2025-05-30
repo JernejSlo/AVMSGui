@@ -44,11 +44,6 @@ class GraphComponent(customtkinter.CTkFrame):
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.graph_frame)
         self.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
-        # Enable scroll zooming
-        self.canvas.get_tk_widget().bind("<MouseWheel>", self.on_scroll_zoom)  # Windows
-        self.canvas.get_tk_widget().bind("<Button-4>", self.on_scroll_zoom)  # Linux scroll up
-        self.canvas.get_tk_widget().bind("<Button-5>", self.on_scroll_zoom)  # Linux scroll down
-
         # === Controls Below the Graph ===
         self.bottom_control_frame = customtkinter.CTkFrame(self.graph_frame, fg_color=self.default_color)
         self.bottom_control_frame.grid(row=1, column=0, pady=(5, 0))
@@ -63,9 +58,7 @@ class GraphComponent(customtkinter.CTkFrame):
         self.labels = ["Measured values"]
         self.selected_index = 0
 
-        self.max_point_options = [10, 25, 50, 100, 200, None]
-        self.current_zoom_index = 2
-        self.max_points = self.max_point_options[self.current_zoom_index]
+        self.max_points = 10
 
         self.value_data_labels = []
 
@@ -90,25 +83,10 @@ class GraphComponent(customtkinter.CTkFrame):
         else:
             spacer_col = 0
 
-        customtkinter.CTkLabel(self.bottom_control_frame, text=" ").grid(row=0, column=spacer_col, padx=10)
-
-        self.zoom_in_button = customtkinter.CTkButton(
-            self.bottom_control_frame, text="🔍-", width=shared_btn_width,
-            height=shared_btn_height, command=self.zoom_in)
-        self.zoom_in_button.grid(row=0, column=spacer_col + 1, padx=2)
-
-        self.zoom_label = customtkinter.CTkLabel(
-            self.bottom_control_frame, text="Last 50 pts", font=customtkinter.CTkFont(size=14))
-        self.zoom_label.grid(row=0, column=spacer_col + 2, padx=5)
-
-        self.zoom_out_button = customtkinter.CTkButton(
-            self.bottom_control_frame, text="🔍+", width=shared_btn_width,
-            height=shared_btn_height, command=self.zoom_out)
-        self.zoom_out_button.grid(row=0, column=spacer_col + 3, padx=2)
 
         # === Value Label (always shown) ===
         self.value_label = customtkinter.CTkLabel(
-            self.bottom_control_frame, text="--", font=customtkinter.CTkFont(size=14))
+            self.bottom_control_frame, text="", font=customtkinter.CTkFont(size=14))
         self.value_label.grid(row=1, column=0, columnspan=7, pady=(5, 5))
         self.value_data_labels = [self.value_label]
 
@@ -150,7 +128,7 @@ class GraphComponent(customtkinter.CTkFrame):
                 self.ax.set_xlabel("Set frequency [Hz]")
                 self.ax.set_ylabel("Measured voltage [V]")
 
-
+                self.ax.set_xlim(0, 110)  # shows x-axis from 0 to 50
                 # Flat line at 10
 
                 x_vals = np.arange(10,100)
@@ -166,15 +144,6 @@ class GraphComponent(customtkinter.CTkFrame):
 
                 self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="Linear reference")
 
-            else:
-                # Fit line for other modes
-                if len(time) >= 2:
-                    x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
-                    y_vals = np.array(data)
-                    coeffs = np.polyfit(x_vals, y_vals, deg=1)
-                    fit_line = np.poly1d(coeffs)
-                    self.ax.plot(x_vals, fit_line(x_vals), color="lightgray", linestyle="--", linewidth=1.5,
-                                 label="Fitted Line")
         except Exception as e:
             print("Graph line drawing failed:", e)
             print(Fore.RED + Style.BRIGHT + "Exception type: " + str(type(e)))
@@ -189,34 +158,3 @@ class GraphComponent(customtkinter.CTkFrame):
         self.ax.legend()
         self.canvas.draw()
 
-    def switch_left(self):
-        self.selected_index = (self.selected_index - 1) % len(self.labels)
-        self.display_label.configure(text=self.labels[self.selected_index])
-
-    def switch_right(self):
-        self.selected_index = (self.selected_index + 1) % len(self.labels)
-        self.display_label.configure(text=self.labels[self.selected_index])
-
-    def zoom_in(self):
-        if self.current_zoom_index > 0:
-            self.current_zoom_index -= 1
-            self.max_points = self.max_point_options[self.current_zoom_index]
-            self.update_zoom_label()
-
-    def zoom_out(self):
-        if self.current_zoom_index < len(self.max_point_options) - 1:
-            self.current_zoom_index += 1
-            self.max_points = self.max_point_options[self.current_zoom_index]
-            self.update_zoom_label()
-
-    def update_zoom_label(self):
-        if self.max_points is None:
-            self.zoom_label.configure(text="All points")
-        else:
-            self.zoom_label.configure(text=f"Last {self.max_points} pts")
-
-    def on_scroll_zoom(self, event):
-        if hasattr(event, "delta"):
-            self.zoom_in() if event.delta > 0 else self.zoom_out()
-        elif hasattr(event, "num"):
-            self.zoom_in() if event.num == 4 else self.zoom_out()
