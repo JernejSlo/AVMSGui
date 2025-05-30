@@ -284,6 +284,23 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
             self.show_all_pages()
             """ Update title and show graph if needed """
             self.terminal.log(f"Mode selected: {mode}")
+
+            if mode == "RES" and mode != self.selected_mode:
+                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                                      "Sense/Ratio Ref HI -> NORMAL HI\n"
+                                      "Sense/Ratio Ref LO -> NORMAL LO\n"
+                                      "Input HI -> NORMAL HI\n"
+                                      "Input LO -> NORMAL LO")
+            if mode in ["ACI","DCI"] and self.selected_mode not in ["ACI","DCI"]:
+                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                                      "Input I -> AUX HI\n"
+                                      "Input LO -> AUX LO")
+            if mode in ["ACV", "DCV","FREQ."] and self.selected_mode not in ["ACV", "DCV","FREQ."]:
+                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                                      "Input HI -> NORMAL HI\n"
+                                      "Input LO -> NORMAL LO")
+
+
             self.selected_mode = mode
 
 
@@ -325,20 +342,19 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
 
-    def show_pause_popup(self,message="Change measurement setup"):
+    def show_pause_popup(self,message="To continue calibration connect with 4 leads system (switch from 2 leads to 4).\n "
+                                                   ):
         popup = customtkinter.CTkToplevel(self)
-        popup.title(message)
-        popup.geometry("500x150")
+        popup.title("Change measurement setup")
+        popup.geometry("500x200")
         popup.transient(self)
         popup.grab_set()
 
-        label = customtkinter.CTkLabel(popup, text="To continue calibration connect with 4 leads system (switch from 2 leads to 4).\n "
-                                                   "After doing so, press continue.")
+        label = customtkinter.CTkLabel(popup, text=f"{message}\n After doing so, press continue.")
         label.pack(pady=20)
 
         def resume():
             popup.destroy()
-            self.running = True
             threading.Thread(target=self.generate_values_no_machine, daemon=True).start()
 
         btn = customtkinter.CTkButton(popup, text="Continue", command=resume)
