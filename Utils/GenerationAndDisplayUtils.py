@@ -18,6 +18,7 @@ class GenerationAndDisplayUtils():
         total_values = len(self.upper_panel.value_display.labels_values["references"])
         current_values = []
         difference_values = []
+        std_values = []
 
         for index in range(total_values):
             if self.interrupt("Generation interrupted."):
@@ -34,17 +35,22 @@ class GenerationAndDisplayUtils():
                 unit = unit[:-1] + "V"
             elif self.sidebar.selected_mode in ("DCI", "ACI"):
                 unit = unit[:-1] + "A"
-
+            if index == 4 and self.selected_mode == "RES" and not self.prompt_shown:
+                self.prompt_shown = True
+                self.running = False
+                self.after(100, self.show_pause_popup)
             new_value = round(random.uniform(0, 1000000000), 2) / 1000000
             difference = round(random.uniform(-1000, 1000), 2) / 1000
-            std_values = round(random.uniform(-1000, 1000), 2) / 1000
+            std = round(random.uniform(0.01, 0.3), 3)
+
             current_values.append({"Value": new_value, "Label": unit})
             difference_values.append({"Value": difference, "Label": unit})
+            std_values.append({"Value": std, "Label": unit})
 
             self.upper_panel.value_display.labels_values["diffMeas"][index] = difference
 
             self.terminal.log(
-                f"Index {index} - Simulated {self.sidebar.selected_mode}: {new_value} {unit}, Δ = {difference} {unit} "
+                f"Index {index} - Simulated {self.sidebar.selected_mode}: {new_value} {unit}, Δ = {difference} {unit}, σ = {std} "
                 f"(ref: {reference} {unit})"
             )
 
@@ -53,24 +59,40 @@ class GenerationAndDisplayUtils():
                 set_value=reference,
                 calculated_value=new_value,
                 ref_set_diff=difference,
-                std=random.uniform(0.1, 0.5),
+                std=std,
+                unit = unit,
                 frequency=None
             )
 
-            self.upper_panel.value_display.update_values(current_values, difference_values,std_values)
+            self.upper_panel.value_display.update_values(current_values, difference_values, std_values)
+            self.update_idletasks()
+
+            # Only simulate linear refs if mode is DCV or ACV
+            if self.selected_mode in ["DCV", "ACV"]:
+                simulated_refs = [i for i in range(1, 6)]
+                simulated_meas = [round(r + random.uniform(-0.1, 0.1), 5) for r in simulated_refs]
+                simulated_diffs = [round(m - r, 5) for m, r in zip(simulated_meas, simulated_refs)]
+                simulated_stds = [round(random.uniform(0.001, 0.01), 5) for _ in simulated_refs]
+                simulated_units = [unit] * len(simulated_refs)
+
+                for i in range(len(simulated_refs)):
+                    self.log_linear_refs(
+                        calibration_id=self.current_calibration_id,
+                        set_value=simulated_refs[i],
+                        calculated_value=simulated_meas[i],
+                        ref_set_diff=simulated_diffs[i],
+                        std=simulated_stds[i],
+                        unit=simulated_units[i]
+                    )
+
             time.sleep(0.1)
 
         if self.interrupt("Generation interrupted."):
             return
 
-            if self.graph_enabled:
-                graph_values = [{"Value": random.uniform(0, 10), "Label": "V", "Step": len(self.graph.time_values) }]
-                self.graph.update_data(graph_values)
 
-        if self.selected_mode == "2Ω" and not self.prompt_shown:
-            self.prompt_shown = True
-            self.running = False
-            self.after(100, self.show_pause_popup)
+
+        self.stop_action()
 
     def interrupt(self,message):
         if not self.running:

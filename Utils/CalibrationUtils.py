@@ -128,9 +128,11 @@ class CalibrationUtils():
                 pass
 
             case 'ACV':
-                self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(len(self.measParameters["frequencies"]))]
-                self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(len(self.measParameters["frequencies"]))]
+                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
+
+                self.measParameters["references"] = [element for element in [100, 1, 10, 100, 750] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in [0.1, 1, 10, 100, 750] for _ in range(unique_freqs)]
+                self.measParameters["units"] = [element for element in ["mV", "V", "V", "V", "V"] for _ in range(unique_freqs)]
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -158,6 +160,11 @@ class CalibrationUtils():
                 self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(len(self.measParameters["frequencies"]))]
                 self.measParameters["range"] = [element for element in [1, 3] for _ in range(len(self.measParameters["frequencies"]))]
                 self.measParameters["units"] = [element for element in ["A", "A"] for _ in range(len(self.measParameters["frequencies"]))]
+
+                unique_freqs = len(list(dict.fromkeys(self.measParameters["frequencies"])))
+                self.measParameters["references"] = [element for element in [1, 2.99999] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in [1, 3] for _ in range(unique_freqs)]
+                self.measParameters["range"] = [element for element in ["A", "A"] for _ in range(unique_freqs)]
                 self.measParameters["measurements"] = [None] * len(self.measParameters["references"])
                 self.measParameters["diffMeas"] = [None] * len(self.measParameters["references"])
                 self.measParameters["stdVars"] = [None] * len(self.measParameters["references"])
@@ -232,7 +239,6 @@ class CalibrationUtils():
 
             # konfiguracija meritve na multimetru HP34401A
             HP34401A_string = f"{'CONFigure:'}{self.measType}{self.dirType} {self.measParameters['range'][MeasNum]}"
-            print(HP34401A_string)
             self.terminal.log(f'IN HP34401A: {HP34401A_string}')
             self.HP34401A.write(HP34401A_string)
 
@@ -279,6 +285,8 @@ class CalibrationUtils():
             for MeasNum in range(len(self.measParameters["linearRefs"])):
 
                 if self.dirType == ":AC":
+                    self.measType = "FREQuency"
+                    self.range = ""
                     F5522A_string = "OUT 10 V"
                     self.terminal.log(f'IN F5522A: {F5522A_string}')
                     self.F5522A.write(F5522A_string)

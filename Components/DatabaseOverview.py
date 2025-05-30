@@ -94,45 +94,71 @@ class DatabaseOverview(customtkinter.CTkFrame):
             return
 
         cursor = self.database.cursor()
+
+        # Get method type
+        cursor.execute("SELECT method_type FROM calibrations WHERE id = ?", (calib_id,))
+        method_row = cursor.fetchone()
+        method_type = method_row[0] if method_row else None
+
+        # Fetch regular measurements
         cursor.execute("""
-            SELECT set_value, calculated_value, ref_set_diff, std,unit, frequency, timestamp
+            SELECT set_value, calculated_value, ref_set_diff, std, unit, frequency, timestamp
             FROM measurements
             WHERE calibration_id = ?
             ORDER BY timestamp
         """, (calib_id,))
-        results = cursor.fetchall()
-        print(results)
+        results = [(*row, "measurement") for row in cursor.fetchall()]
 
+        # Fetch colinearity if needed
+        colinearity_results = []
+        if method_type in ("DCV", "ACV"):
+            cursor.execute("""
+                SELECT linear_ref, measurement, linear_diff, linear_std, unit, NULL as frequency, timestamp
+                FROM colinearity
+                WHERE calibration_id = ?
+                ORDER BY timestamp
+            """, (calib_id,))
+            colinearity_results = [(*row, "linear_measurement") for row in cursor.fetchall()]
+
+        # Merge all
+        combined_results = results + colinearity_results
+
+        # Clear frame
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        if results:
-            headers = ["Reference", "Measured", "Δ (Diff)", "STD", "Frequency", "Timestamp"]
+        if combined_results:
+            headers = ["Reference", "Measured", "Δ (Diff)", "STD", "Frequency", "Timestamp", "Type"]
             for idx, header in enumerate(headers):
                 customtkinter.CTkLabel(
                     self.scrollable_frame, text=header,
                     font=customtkinter.CTkFont(size=14, weight="bold")
                 ).grid(row=0, column=idx, padx=10, pady=(0, 5), sticky="w")
 
-            for row_idx, row in enumerate(results, start=1):
-                print(row)
-                set_value, calculated_value, ref_set_diff, std,unit,frequency, timestamp = row
+            for row_idx, row in enumerate(combined_results, start=1):
+                set_value, calculated_value, ref_set_diff, std, unit, frequency, timestamp, row_type = row
 
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{set_value} {unit}", font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=0, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{calculated_value} {unit}", font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=1, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{ref_set_diff} {unit}", font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=2, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{std} {unit}", font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=3, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=f"{frequency}", font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=4, padx=10, pady=2, sticky="w")
-                customtkinter.CTkLabel(self.scrollable_frame, text=timestamp, font=customtkinter.CTkFont(size=13)).grid(
-                    row=row_idx, column=5, padx=10, pady=2, sticky="w")
+                values = [
+                    f"{set_value} {unit}",
+                    f"{calculated_value} {unit}",
+                    f"{ref_set_diff} {unit}",
+                    f"{std} {unit}",
+                    frequency or "/",
+                    timestamp,
+                    row_type
+                ]
+
+                for col_idx, val in enumerate(values):
+                    customtkinter.CTkLabel(
+                        self.scrollable_frame, text=val,
+                        font=customtkinter.CTkFont(size=13)
+                    ).grid(row=row_idx, column=col_idx, padx=10, pady=2, sticky="w")
         else:
             customtkinter.CTkLabel(
                 self.scrollable_frame,
                 text="No measurements found.",
                 font=customtkinter.CTkFont(size=14)
             ).grid(row=0, column=0, sticky="w", padx=10, pady=5)
+
+
+

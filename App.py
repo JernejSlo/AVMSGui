@@ -24,13 +24,15 @@ from Utils.CalibrationUtils import CalibrationUtils
 from Utils.GenerationAndDisplayUtils import GenerationAndDisplayUtils
 from Utils.color_theme import COLORS
 
+import screeninfo
+
 customtkinter.set_appearance_mode("Dark")
 customtkinter.set_default_color_theme("blue")
 
 class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def __init__(self):
 
-        self.skip_fake_version = True
+        self.skip_fake_version = False
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
 
@@ -40,7 +42,12 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.text_color = COLORS["lg_text"]
 
         self.title("kalibrator.py")
-        self.geometry(f"{1200}x{1200}")
+
+        screen = screeninfo.get_monitors()[0]
+        width, height = screen.width, screen.height
+        self.geometry(f"{width}x{height}+0+0")
+
+
 
         self.running = False
         self.graph_enabled = False
@@ -119,67 +126,118 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         self.upper_panel.content_box.grid_remove()
 
+    def get_pairs(self):
+        total_refs = len(self.measParameters["references"])
+        count = 0
+        i = 0
+        while i < total_refs:
+            r1 = abs(self.measParameters["references"][i])
+            r2 = abs(self.measParameters["references"][i + 1]) if i + 1 < total_refs else None
+            r3 = abs(self.measParameters["references"][i + 2]) if i + 2 < total_refs else None
+
+            is_triple = r1 == r2 == r3
+            is_pair = r1 == r2 and not is_triple
+
+            if is_triple:
+                i += 3
+            elif is_pair:
+                i += 2
+            else:
+                i += 1
+            count += 1
+
+        total_blocks = count
+        return total_blocks
+
     def update_display_label(self, mode):
         j = 0
-        total_pairs = len(self.upper_panel.value_display.pair_indices)
+        total_blocks_required = self.get_pairs()  # how many are needed based on current data
+        total_blocks_available = len(self.upper_panel.value_display.pair_indices)  # always 7 for now
 
-        for pair_index in range(total_pairs):
+        # Step 1: Hide all headers and all labels
+        for i in range(total_blocks_available):
+            self.upper_panel.value_display.headers[i].grid_remove()
+
+            for label_list in (
+                    self.upper_panel.value_display.single_value_labels,
+                    self.upper_panel.value_display.single_diff_labels,
+                    self.upper_panel.value_display.single_std_labels,
+                    self.upper_panel.value_display.value_labels,
+                    self.upper_panel.value_display.diff_labels,
+                    self.upper_panel.value_display.std_labels,
+            ):
+                for k in range(3):
+                    idx = i * 3 + k
+                    if idx < len(label_list):
+                        label_list[idx].grid_remove()
+
+        # Step 2: Re-show the blocks you need
+        for block_index in range(total_blocks_required):
             if j >= len(self.measParameters["references"]):
-                # Out of data — hide both single & double layouts completely
-                self.upper_panel.value_display.single_value_labels[pair_index].grid_remove()
-                self.upper_panel.value_display.single_diff_labels[pair_index].grid_remove()
-                self.upper_panel.value_display.single_std_labels[pair_index].grid_remove()
-
-                self.upper_panel.value_display.value_labels[pair_index * 2].grid_remove()
-                self.upper_panel.value_display.value_labels[pair_index * 2 + 1].grid_remove()
-                self.upper_panel.value_display.diff_labels[pair_index * 2].grid_remove()
-                self.upper_panel.value_display.diff_labels[pair_index * 2 + 1].grid_remove()
-                self.upper_panel.value_display.std_labels[pair_index * 2].grid_remove()
-                self.upper_panel.value_display.std_labels[pair_index * 2 + 1].grid_remove()
-
-                self.upper_panel.value_display.headers[pair_index].grid_remove()
-                continue
-
-            # Show header
-            self.upper_panel.value_display.headers[pair_index].grid()
+                break
 
             references = self.measParameters["references"]
             units = self.measParameters["units"]
+            unit = units[j]
             ref = references[j]
             r1 = abs(ref)
             r2 = abs(references[j + 1]) if j + 1 < len(references) else None
+            r3 = abs(references[j + 2]) if j + 2 < len(references) else None
 
-            is_pair = r1 == r2 and r1 != 0
-            unit = units[j]
+            is_triple = (r1 == r2 == r3)
+            is_pair = (r1 == r2) and not is_triple
 
-            if is_pair:
-                self.upper_panel.value_display.switch_to_double(pair_index)
-                self.upper_panel.value_display.headers[pair_index].configure(text=f"Measured at ±{r1} {unit}")
+            if is_triple:
+
+                unique_freqs = list(dict.fromkeys(self.measParameters['frequencies']))
+                freq_text = ", ".join(f"{f}" for f in unique_freqs)
+                text = f"Measured at {r1} at {freq_text}"
+
+                self.upper_panel.value_display.switch_to_triple(block_index)
+                self.upper_panel.value_display.headers[block_index].configure(
+                    text=text
+                )
+                self.upper_panel.value_display.headers[block_index].grid()
+                j += 3
+            elif is_pair:
+                self.upper_panel.value_display.switch_to_double(block_index)
+                self.upper_panel.value_display.headers[block_index].configure(
+                    text=f"Measured at ±{r1} {unit}"
+                )
+                self.upper_panel.value_display.headers[block_index].grid()
                 j += 2
             else:
-                self.upper_panel.value_display.switch_to_single(pair_index, self.title)
-                self.upper_panel.value_display.headers[pair_index].configure(text=f"Measured at {ref} {unit}")
+                self.upper_panel.value_display.switch_to_single(block_index)
+                self.upper_panel.value_display.headers[block_index].configure(
+                    text=f"Measured at {ref} {unit}"
+                )
+                self.upper_panel.value_display.headers[block_index].grid()
                 j += 1
 
     def clear_values(self):
         """Clear all displayed measurement, difference, and standard deviation values."""
-        for val_label in self.upper_panel.value_display.value_labels:
-            val_label.configure(text="--")
-        for diff_label in self.upper_panel.value_display.diff_labels:
-            diff_label.configure(text="Δ --")
-        for std_label in self.upper_panel.value_display.std_labels:
-            std_label.configure(text="σ --")
 
-        for single_val_label in self.upper_panel.value_display.single_value_labels:
-            single_val_label.configure(text="--")
-        for single_diff_label in self.upper_panel.value_display.single_diff_labels:
-            single_diff_label.configure(text="Δ --")
-        for single_std_label in self.upper_panel.value_display.single_std_labels:
-            single_std_label.configure(text="σ --")
+        # Clear standard (multi-label) layout
+        for i, label in enumerate(self.upper_panel.value_display.value_labels):
+            label.configure(text="--")
+        for i, label in enumerate(self.upper_panel.value_display.diff_labels):
+            label.configure(text="Δ --")
+        for i, label in enumerate(self.upper_panel.value_display.std_labels):
+            label.configure(text="σ --")
 
+        # Clear single layout
+        for i, label in enumerate(self.upper_panel.value_display.single_value_labels):
+            label.configure(text="--")
+        for i, label in enumerate(self.upper_panel.value_display.single_diff_labels):
+            label.configure(text="Δ --")
+        for i, label in enumerate(self.upper_panel.value_display.single_std_labels):
+            label.configure(text="σ --")
+
+        # Reset stored values
         self.vals = []
         self.diffs = []
-            # Update display
+        self.stds = []
+
     def show_terminal(self):
         self.graph.pack_forget()
         self.terminal.pack(fill="both", expand=True)
