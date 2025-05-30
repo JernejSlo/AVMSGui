@@ -372,6 +372,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         entry2.pack(pady=10)
 
         def confirm_inputs():
+            self.custom_address_chosen = True
             hp_val = entry1.get().strip()
             fluke_val = entry2.get().strip()
 
@@ -399,6 +400,8 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         if show_default:
             def use_default():
+                self.hpadress = 22
+                self.flukeadress = 4
                 popup.destroy()
 
             btn_default = customtkinter.CTkButton(popup, text="Use Default", command=use_default)
