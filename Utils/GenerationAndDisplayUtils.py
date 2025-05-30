@@ -117,18 +117,20 @@ class GenerationAndDisplayUtils():
             "dirType": ""
         }
         meas = self.measParameters
-        for i in range(len(meas["linearRefs"])):
+        for i in range(len(meas["measurements"])):
             freq = meas["frequencies"][i]
             new_value = meas["measurements"][i]
             stdVar = meas["stdVars"][i]
             diffMeas = meas["diffMeas"][i]
             ref = meas["references"][i]
+            unit = meas["units"][i]
             self.log_measurement(
                 calibration_id=self.current_calibration_id,
                 set_value=ref,
                 calculated_value=new_value,
                 ref_set_diff=diffMeas,
                 std=stdVar,
+                unit=unit,
                 frequency=None
             )
 
