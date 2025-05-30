@@ -282,6 +282,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
         if not self.running:
             self.graph.update_mode(mode)
+            self.graph.update_graph()
             self.changeMeasParam(mode)
             self.show_all_pages()
             """ Update title and show graph if needed """
