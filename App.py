@@ -286,19 +286,22 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
             self.terminal.log(f"Mode selected: {mode}")
 
             if mode == "RES" and mode != self.selected_mode:
-                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                self.show_pause_popup("HP34401A multimeter -> Fluke 5522A calibrator\n\n"
+                                      "Connect ONLY (disconnect other leads)\n\n"
                                       "Sense/Ratio Ref HI -> NORMAL HI\n"
-                                      "Sense/Ratio Ref LO -> NORMAL LO\n"
+                                      "Sense/Ratio Ref LO -> NORMAL LO\n\n"
                                       "Input HI -> NORMAL HI\n"
-                                      "Input LO -> NORMAL LO")
+                                      "Input LO -> NORMAL LO\n")
             if mode in ["ACI","DCI"] and self.selected_mode not in ["ACI","DCI"]:
-                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                self.show_pause_popup("HP34401A multimeter -> Fluke 5522A calibrator\n\n"
+                                      "Connect ONLY (disconnect other leads)\n\n"
                                       "Input I -> AUX HI\n"
-                                      "Input LO -> AUX LO")
+                                      "Input LO -> AUX LO\n")
             if mode in ["ACV", "DCV","FREQ."] and self.selected_mode not in ["ACV", "DCV","FREQ."]:
-                self.show_pause_popup("Connect: HP34401A multimeter -> Fluke 5522A calibrator\n"
+                self.show_pause_popup("HP34401A multimeter -> Fluke 5522A calibrator\n\n"
+                                      "Connect ONLY (disconnect other leads)\n\n"
                                       "Input HI -> NORMAL HI\n"
-                                      "Input LO -> NORMAL LO")
+                                      "Input LO -> NORMAL LO\n")
 
 
             self.selected_mode = mode
@@ -343,10 +346,14 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
 
     def show_pause_popup(self,message="To continue calibration connect with 4 leads system (switch from 2 leads to 4).\n "
-                                                   ):
+                                                     ):
+        self.update_idletasks()
+        m_x = self.winfo_width() / 2
+        m_y = self.winfo_height() / 2
+        print(m_x,m_y)
         popup = customtkinter.CTkToplevel(self)
         popup.title("Change measurement setup")
-        popup.geometry("500x200")
+        popup.geometry(f"500x250+{int(m_x - 250)}+{int(m_y - 125)}")
         popup.transient(self)
         popup.grab_set()
 
