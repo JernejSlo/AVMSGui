@@ -19,7 +19,7 @@ class Sidebar(customtkinter.CTkFrame):
         self.active_button = None
 
         # Title Label
-        self.title_label = customtkinter.CTkLabel(self, text="CustomTkinter", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.title_label = customtkinter.CTkLabel(self, text="Calibration App", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         # Measurement Mode Buttons

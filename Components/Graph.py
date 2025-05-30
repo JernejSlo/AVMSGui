@@ -11,12 +11,12 @@ from Utils.color_theme import COLORS
 class GraphComponent(customtkinter.CTkFrame):
     """ Real-time updating graph component (Uses CustomTkinter default background) """
 
-    def __init__(self, parent):
+    def __init__(self, parent,mode):
         self.default_color = COLORS["backgroundLight"]
         self.active_color = COLORS["backgroundDark"]
         self.hover_color = COLORS["hover"]
         self.text_color = COLORS["lg_text"]
-
+        self.selected_mode = mode
         super().__init__(parent, fg_color=self.default_color)
 
         self.grid(row=0, column=0, padx=(20, 20), pady=(10, 10), sticky="nsew")
@@ -125,7 +125,7 @@ class GraphComponent(customtkinter.CTkFrame):
                 self.value_data_labels[i].configure(text=f"{value_str} {val['Label']}")"""
 
     def update_graph(self, frame=None):
-        """ Update the graph display with points and a fitted line """
+        """ Update the graph display with points and a fitted or fixed line depending on mode """
         self.ax.clear()
         data = self.data_sets[self.selected_index]
         time = self.time_values
@@ -137,17 +137,29 @@ class GraphComponent(customtkinter.CTkFrame):
         # Plot points
         self.ax.scatter(time, data, label=self.labels[self.selected_index], color="cyan", s=20)
 
-        # Fit a line if enough points
-        if len(time) >= 2:
-            try:
-                # Convert timestamps or step labels to numeric if needed
+        # Mode-dependent line
+        try:
+            if self.selected_mode == "ACV":
+                # Flat line at 10
                 x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
-                y_vals = np.array(data)
-                coeffs = np.polyfit(x_vals, y_vals, deg=1)
-                fit_line = np.poly1d(coeffs)
-                self.ax.plot(x_vals, fit_line(x_vals), color="lightgray", linestyle="--", linewidth=1.5, label="Fitted Line")
-            except Exception as e:
-                print("Fit failed:", e)
+                y_vals = np.full_like(x_vals, 10)
+                self.ax.plot(x_vals, y_vals, color="orange", linestyle="--", linewidth=1.5, label="Flat @ 10")
+            elif self.selected_mode == "DCV":
+                # Linear 1:1 line
+                x_vals = np.arange(1, len(time) + 1)
+                y_vals = x_vals  # Diagonal line (1,1), (2,2), ...
+                self.ax.plot(x_vals, y_vals, color="lightgreen", linestyle="--", linewidth=1.5, label="1:1 Line")
+            else:
+                # Fit line for other modes
+                if len(time) >= 2:
+                    x_vals = np.arange(len(time)) if not isinstance(time[0], (int, float)) else np.array(time)
+                    y_vals = np.array(data)
+                    coeffs = np.polyfit(x_vals, y_vals, deg=1)
+                    fit_line = np.poly1d(coeffs)
+                    self.ax.plot(x_vals, fit_line(x_vals), color="lightgray", linestyle="--", linewidth=1.5,
+                                 label="Fitted Line")
+        except Exception as e:
+            print("Graph line drawing failed:", e)
 
         self.ax.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5)
         self.ax.legend()
