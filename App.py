@@ -244,11 +244,12 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.bottom_bar.highlight_terminal()
 
     def show_graph(self):
-        self.terminal.pack_forget()
-        self.graph.pack(fill="both", expand=True)
-        self.bottom_bar.highlight_graph()
+        if self.selected_mode in ["ACV","DCV"]:
+            self.terminal.pack_forget()
+            self.graph.pack(fill="both", expand=True)
+            self.bottom_bar.highlight_graph()
 
-        self.graph_enabled = True
+            self.graph_enabled = True
 
     def show_calibration_view(self):
         self.database_overview.grid_remove()
