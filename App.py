@@ -338,7 +338,6 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
             self.terminal.log(f"Started new calibration session: ID {self.current_calibration_id}")
 
             threading.Thread(target=self.get_calibration_values, daemon=True).start()
-            self.terminal.log("Generating values...")
             self.upper_panel.controls.stop_button.configure(state="enabled",fg_color="red")
         self.upper_panel.controls.start_button.configure(state="disabled",fg_color="#B0B0B0")
 
