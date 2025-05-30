@@ -124,6 +124,10 @@ class GraphComponent(customtkinter.CTkFrame):
             if i < len(self.value_data_labels):
                 self.value_data_labels[i].configure(text=f"{value_str} {val['Label']}")"""
 
+
+    def update_mode(self,mode):
+        self.selected_mode = mode
+
     def update_graph(self, frame=None):
         """ Update the graph display with points and a fitted or fixed line depending on mode """
         self.ax.clear()
