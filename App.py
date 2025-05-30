@@ -32,6 +32,7 @@ customtkinter.set_default_color_theme("blue")
 class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def __init__(self):
 
+        self.selected_mode = ""
         self.skip_fake_version = True
         super().__init__()
         self.configure(fg_color=COLORS["backgroundLight"], bg_color=COLORS["backgroundLight"])
@@ -41,14 +42,13 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.hover_color = COLORS["hover"]
         self.text_color = COLORS["lg_text"]
 
-        self.title("kalibrator.py")
+        self.title("Calibration App.py")
 
         screen = screeninfo.get_monitors()[0]
-        width, height = screen.width, screen.height
-        self.geometry(f"{width}x{height}+0+0")
-
-
-
+        #width, height = screen.width, screen.height
+        #self.geometry(f"{width}x{height-300}+0+0")
+        self.state('zoomed')
+        self.update()
         self.running = False
         self.graph_enabled = False
 
@@ -93,7 +93,7 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
         self.paned.add(self.main_frame, minsize=400)
 
         # === Inside Lower Panel (Graph + Terminal toggle) ===
-        self.graph = GraphComponent(self.lower_panel)
+        self.graph = GraphComponent(self.lower_panel,self.selected_mode)
         self.terminal = TerminalOutput(self.lower_panel)
 
         self.graph.pack_forget()
@@ -191,7 +191,8 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
                 unique_freqs = list(dict.fromkeys(self.measParameters['frequencies']))
                 freq_text = ", ".join(f"{f}" for f in unique_freqs)
-                text = f"Measured at {r1} at {freq_text}"
+                text = f"Measured at {r1} {unit} at {freq_text}"
+                print(self.measParameters["units"])
 
                 self.upper_panel.value_display.switch_to_triple(block_index)
                 self.upper_panel.value_display.headers[block_index].configure(
@@ -279,6 +280,8 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
 
     def update_title(self, mode):
         if not self.running:
+
+            self.changeMeasParam(mode)
             self.show_all_pages()
             """ Update title and show graph if needed """
             self.terminal.log(f"Mode selected: {mode}")
@@ -324,9 +327,9 @@ class App(customtkinter.CTk,CalibrationUtils,GenerationAndDisplayUtils):
     def change_scaling(self, new_scaling):
         customtkinter.set_widget_scaling(int(new_scaling.replace("%", "")) / 100)
 
-    def show_pause_popup(self):
+    def show_pause_popup(self,message="Change measurement setup"):
         popup = customtkinter.CTkToplevel(self)
-        popup.title("Change measurement setup")
+        popup.title(message)
         popup.geometry("500x150")
         popup.transient(self)
         popup.grab_set()
