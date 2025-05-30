@@ -105,7 +105,9 @@ class CalibrationUtils():
             self.F5522A = self.rm.open_resource(f'GPIB0::{self.flukeadress}::INSTR')
         except:
             self.stop_action()
-            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A, addresses broken:", show_default=False)
+            def_ = self.custom_address_chosen
+            use_default = not def_
+            self.show_input_popup(message="Enter addresses for HP 34401A and FLUKE 5522A (current addresses are broken or machine isn't turned on):", show_default=use_default)
 
         self.HP34401A.timeout = 2500
         self.F5522A.timeout = 2500
